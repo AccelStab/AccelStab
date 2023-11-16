@@ -34,7 +34,7 @@ The available functions within the package are as follows:
 You can install the development version of AccelStab from [GitHub](https://github.com/) with:
 
 ``` r
-devtools::install_github("gsk-tech/AccelStab")
+devtools::install_github("AccelStab/AccelStab")
 ```
 ## Getting Started
 A more detailed look at the features and background theory of the package can be found in the 'Introduction' vigentte (ADD LINK HERE), which gives instructions on how to use the package with the available functions and their arguments.
