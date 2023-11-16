@@ -1,0 +1,34 @@
+Package: AccelStab
+Title: Accelerated Stability Kinetic Modelling
+Version: 0.2.0
+Authors@R: 
+    person("Bernard G", "Franq", , "first.last@example.com", role = c("cph" ,"aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Estimate the Sestak-Berggren kinetic model from experimental data. The 2-
+  steps model is given by Ordinary Differential Equation (ODE) and the statistical
+  intervals are obtained by resampling techniques (bootstrap).The 1-step model is
+  assessed by its integrate formula via a nonlinear fit. The predictions are
+  automatically calculated together withthe corresponding confidence and prediction
+  intervals. The results can be plotted with multiple plots (created by using ggplot).
+  The examples illustrate the accelerated stability modeling in drugs and
+  vaccines development.
+License: AGPL (>= 3)
+Encoding: UTF-8
+RoxygenNote: 7.2.0
+Imports: 
+    dplyr,
+    ggplot2,
+    minpack.lm,
+    mvtnorm,
+    stats
+Suggests: 
+    testthat,
+    covr,
+    knitr,
+    rmarkdown,
+Depends: R (>= 4.1.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+LazyData: true
+Language: en-GB
