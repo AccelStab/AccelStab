@@ -32,21 +32,13 @@ The available functions within the package are as follows:
 
 ## Installation
 
-You can install the development version of AccelStab from
-[GitHub](https://github.com/) with:
+You can install AccelStab from GitHub with:
 
 ``` r
 devtools::install_github("AccelStab/AccelStab")
 ```
 
-## Getting Started
-
-A more detailed look at the features and background theory of the
-package can be found in the ‘Introduction’ vigentte (ADD LINK HERE),
-which gives instructions on how to use the package with the available
-functions and their arguments.
-
 ## Feedback
 
-Log an issue (add hyoerlink to isseu) or contact Bernard Franq (add
-email).
+Log an [issue](https://github.com/AccelStab/AccelStab/issues) here or
+contact a moderator.
