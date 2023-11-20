@@ -18,35 +18,34 @@ transformation can have a large impact on the outcome.
 
 The available functions within the package are as follows:
 
-- `step1_down()` Fit the one-step Sestak-Berggren kinetic model.
-- `step1_plot_desc()` Plot the stability data.
-- `step1_plot_pred()` Plot the stability data and visualise the
-  predictions.
-- `step1_plot_CI()` Plot the stability data and visualise the
-  predictions with confidence intervals.
-- `step1_plot_PI()` Plot the stability data and visualise the
-  predictions with prediction intervals.
-- `step1_plot_T()` Plot the stability data and visualise the predictions
-  with focus on one temperature.
-- `excursion()` Predict a temperature excursion for a product.
+-   `step1_down()` Fit the one-step Sestak-Berggren kinetic model.
+-   `step1_plot_desc()` Plot the stability data.
+-   `step1_plot_pred()` Plot the stability data and visualise the
+    predictions.
+-   `step1_plot_CI()` Plot the stability data and visualise the
+    predictions with confidence intervals.
+-   `step1_plot_PI()` Plot the stability data and visualise the
+    predictions with prediction intervals.
+-   `step1_plot_T()` Plot the stability data and visualise the
+    predictions with focus on one temperature.
+-   `excursion()` Predict a temperature excursion for a product.
 
 ## Installation
 
-You can install the development version of AccelStab from
-[GitHub](https://github.com/) with:
+You can install the development version of AccelStab from GitHub with:
 
 ``` r
-devtools::install_github("gsk-tech/AccelStab")
+devtools::install_github("AccelStab/AccelStab")
 ```
 
 ## Getting Started
 
 A more detailed look at the features and background theory of the
-package can be found in the ‘Introduction’ vigentte (ADD LINK HERE),
+package can be found in the [‘Introduction’
+vigentte](https://github.com/AccelStab/AccelStab/blob/main/vignettes/Introduction.Rmd),
 which gives instructions on how to use the package with the available
 functions and their arguments.
 
 ## Feedback
 
-Log an issue (add hyoerlink to isseu) or contact Bernard Franq (add
-email).
+Log an issue (add hyoerlink to isseu) or contact a .
