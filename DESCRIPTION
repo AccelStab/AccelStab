@@ -2,15 +2,17 @@ Package: AccelStab
 Title: Accelerated Stability Kinetic Modelling
 Version: 0.2.0
 Authors@R: 
-    person("Bernard G", "Franq", , "first.last@example.com", role = c("cph" ,"aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: Estimate the Sestak-Berggren kinetic model from experimental data. The 2-
-  steps model is given by Ordinary Differential Equation (ODE) and the statistical
-  intervals are obtained by resampling techniques (bootstrap).The 1-step model is
-  assessed by its integrate formula via a nonlinear fit. The predictions are
-  automatically calculated together withthe corresponding confidence and prediction
-  intervals. The results can be plotted with multiple plots (created by using ggplot).
-  The examples illustrate the accelerated stability modeling in drugs and
+      c(person("Bernard G", "Franq", email = "accelstab@gmail.com", role = c("aut","cph")),
+      person("Ben", "Wells", email = "ben@example.com", role = c("cre")),
+      person("Alex", "Ball", email = "alex_keith_ball@hotmail.com", role = "ctb"))
+Description: Estimate the Šesták–Berggren kinetic model (degradation model) from experimental data. A
+  A closed-form (analytic) solution to the degradation model is implemented as a non-linear fit,
+  allowing for the extrapolation of the degradation of a drug product - both in time and 
+  temperature. Parametric bootstrap, with kinetic parameters drawn from the multivariate
+  t-distribution, and analytical formaulae (the delta method) are available options to calculate
+  the confidence and prediction intervals.
+  The results (modelling, extrapolations and statistical intervals) can be visualised
+  with multiple plots. The examples illustrate the accelerated stability modelling in drugs and
   vaccines development.
 License: AGPL (>= 3)
 Encoding: UTF-8
@@ -25,6 +27,7 @@ Suggests:
     testthat,
     knitr,
     rmarkdown,
+    lifecycle
 Depends: R (>= 4.1.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
