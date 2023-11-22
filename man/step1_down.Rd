@@ -63,10 +63,10 @@ functions in the package.
 }
 }
 \description{
-Fit the one-step Sestak-Berggren kinetic model.
+Fit the one-step Šesták–Berggren kinetic model.
 }
 \details{
-Fit the one-step Sestak-Berggren kinetic (non-linear) model using
+Fit the one-step Šesták–Berggren kinetic (non-linear) model using
 accelerated stability data.
 }
 \examples{

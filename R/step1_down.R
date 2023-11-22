@@ -1,8 +1,8 @@
 #' @title Step1 Down Model
 #'
-#' @description Fit the one-step Sestak-Berggren kinetic model.
+#' @description Fit the one-step Šesták–Berggren kinetic model.
 #'
-#' @details Fit the one-step Sestak-Berggren kinetic (non-linear) model using
+#' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
 #'  accelerated stability data.
 #'
 #' @param data Dataframe containing accelerated stability data (required).

@@ -1,9 +1,11 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Accelerated Stability Kinetic Modelling
+# Accelerated Stability Kinetic Modelling <img src="man/figures/AccelStab.png" align="right" height="138" />
 
 <!-- badges: start -->
+
+[![lifecycle](https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 ## Overview
@@ -11,14 +13,14 @@
 This package utilises the Šesták–Berggren equation alongside the
 Arrhenius equation to make a simple and consistent way for a user to
 carry out the calculations and predictions required by accelerated
-stability studies. Currently the package is only able to work with
-decreasing variables, you may choose to transform your increasing
-variable into a decreasing one but note that your choice of
-transformation can have a large impact on the outcome.
+stability studies. Currently the package works with decreasing
+variables, you may choose to transform your increasing variable into a
+decreasing one but note that your choice of transformation can impact
+the outcome.
 
 The available functions within the package are as follows:
 
--   `step1_down()` Fit the one-step Sestak-Berggren kinetic model.
+-   `step1_down()` Fit the one-step Šesták–Berggren kinetic model.
 -   `step1_plot_desc()` Plot the stability data.
 -   `step1_plot_pred()` Plot the stability data and visualise the
     predictions.
@@ -32,10 +34,11 @@ The available functions within the package are as follows:
 
 ## Installation
 
-You can install AccelStab from GitHub with:
+Install AccelStab the following way -
 
 ``` r
-devtools::install_github("AccelStab/AccelStab")
+install.packages("AccelStab/AccelStab")
+library(AccelStab)
 ```
 
 ## Feedback
