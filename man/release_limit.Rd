@@ -2,7 +2,7 @@
 % Please edit documentation in R/release_limit.R
 \name{release_limit}
 \alias{release_limit}
-\title{release_limit}
+\title{Release Limit}
 \usage{
 release_limit(
   step1_down_object,

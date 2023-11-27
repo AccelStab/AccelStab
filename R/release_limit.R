@@ -59,13 +59,13 @@ release_limit <- function(step1_down_object, shelf_temp, shelf_time, LSL,
   if(step1_down_object$user_parameters$reparameterisation == F &&
      step1_down_object$user_parameters$zero_order == F){
 
-  k1 = fit_object$par$k1
-  k2 = fit_object$par$k2
-  k3 = fit_object$par$k3
-  c0 = fit_object$par$c0
+    k1 = fit_object$par$k1
+    k2 = fit_object$par$k2
+    k3 = fit_object$par$k3
+    c0 = fit_object$par$c0
 
-  preds$degrad <- (1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / (preds$K))))^(1/(1-k3)))
-  preds$conc <- c0 - c0 * preds$degrad
+    preds$degrad <- (1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / (preds$K))))^(1/(1-k3)))
+    preds$conc <- c0 - c0 * preds$degrad
 
 
     preds$derivk1 = c0 * preds$total_time * (-exp(k1 - k2/preds$K)) * ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2/preds$K)))^(1/(1 - k3) - 1)
@@ -94,7 +94,7 @@ release_limit <- function(step1_down_object, shelf_temp, shelf_time, LSL,
         SIG[2, 2] + (preds$derivc0)^2 * SIG[3, 3] + 2 * preds$derivk1 *
         preds$derivk2 * SIG[1, 2] + 2 * preds$derivk1 * preds$derivc0 *
         SIG[1, 3] + 2 * preds$derivk2 * preds$derivc0 * SIG[2,
-                                                          3]
+                                                            3]
       preds$derivk1 = preds$derivk2 = preds$derivc0 = NULL}else if(step1_down_object$user_parameters$reparameterisation == F &&
                                                                    step1_down_object$user_parameters$zero_order == T){
         k1 = fit_object$par$k1
@@ -126,26 +126,26 @@ release_limit <- function(step1_down_object, shelf_temp, shelf_time, LSL,
           preds$derivc0 = 1 - preds$degrad
 
           preds$varY = (preds$derivk1)^2 * SIG[1,1] + (preds$derivk2)^2 * SIG[2,2] + (preds$derivk3)^2 * SIG[3,3] + (preds$derivc0)^2 * SIG[4,4] +
-              2*preds$derivk1*preds$derivk2 * SIG[1,2] + 2*preds$derivk1*preds$derivk3 * SIG[1,3] + 2*preds$derivk1*preds$derivc0 * SIG[1,4] +
-              2*preds$derivk2*preds$derivk3 * SIG[2,3] + 2*preds$derivk2*preds$derivc0 * SIG[2,4] + 2*preds$derivk3*preds$derivc0 * SIG[3,4]
+            2*preds$derivk1*preds$derivk2 * SIG[1,2] + 2*preds$derivk1*preds$derivk3 * SIG[1,3] + 2*preds$derivk1*preds$derivc0 * SIG[1,4] +
+            2*preds$derivk2*preds$derivk3 * SIG[2,3] + 2*preds$derivk2*preds$derivc0 * SIG[2,4] + 2*preds$derivk3*preds$derivc0 * SIG[3,4]
           preds$derivk1 = preds$derivk2 = preds$derivk3 = preds$derivc0 = NULL
         }
 
-    if(interval == "CI"){
-      preds$CI1b = preds$conc - qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY)
-      preds$CI2b = preds$conc + qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY)
-      # Add the degradation intervals
-      preds$degrad_CI_up <- (c0 - preds$CI1b) / c0
-      preds$degrad_CI_low <- (c0 - preds$CI2b) / c0
+  if(interval == "CI"){
+    preds$CI1b = preds$conc - qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY)
+    preds$CI2b = preds$conc + qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY)
+    # Add the degradation intervals
+    preds$degrad_CI_up <- (c0 - preds$CI1b) / c0
+    preds$degrad_CI_low <- (c0 - preds$CI2b) / c0
 
-    }else{
-      preds$PI1b = preds$conc - qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY + sigma^2)
-      preds$PI2b = preds$conc + qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY + sigma^2)
-      # Add the degradation intervals
-      preds$degrad_PI_up <- (c0 - preds$PI1b) / c0
-      preds$degrad_PI_low <- (c0 - preds$PI2b) / c0
+  }else{
+    preds$PI1b = preds$conc - qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY + sigma^2)
+    preds$PI2b = preds$conc + qt((1+confidence_interval)/2, summary(fit_object)$df[2]) * sqrt(preds$varY + sigma^2)
+    # Add the degradation intervals
+    preds$degrad_PI_up <- (c0 - preds$PI1b) / c0
+    preds$degrad_PI_low <- (c0 - preds$PI2b) / c0
 
-    }
+  }
 
   # Calculate the RL
   if(interval == "CI"){degrad = as.numeric(preds %>% filter(total_time == shelf_time) %>% select(degrad_CI_up))}else{
@@ -162,7 +162,7 @@ release_limit <- function(step1_down_object, shelf_temp, shelf_time, LSL,
   c0 = RL
   if(step1_down_object$user_parameters$reparameterisation == F &&
      step1_down_object$user_parameters$zero_order == F){
-  preds$degradRL <- (1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / (preds$K))))^(1/(1-k3)))
+    preds$degradRL <- (1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / (preds$K))))^(1/(1-k3)))
   }else if(step1_down_object$user_parameters$reparameterisation == T &&
            step1_down_object$user_parameters$zero_order == T){
     preds$degradRL <- preds$total_time * exp(k1 - k2/preds$K + k2/Kref)
@@ -172,7 +172,7 @@ release_limit <- function(step1_down_object, shelf_temp, shelf_time, LSL,
   }else if(step1_down_object$user_parameters$reparameterisation == T &&
            step1_down_object$user_parameters$zero_order == F){
     preds$degradRL <- 1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / preds$K + k2 / Kref)))^(1/(1-k3))
-    }
+  }
 
   preds$concRL <- c0 - c0 * preds$degradRL
 
@@ -249,7 +249,7 @@ release_limit <- function(step1_down_object, shelf_temp, shelf_time, LSL,
     }
 
   if(max_time_pred != shelf_time){
-  print("To ensure predictions are the same length please align the values of max_time_pred in your step1.down call and shelf_time in your RL call")}
+    print("To ensure predictions are the same length please align the values of max_time_pred in your step1.down call and shelf_time in your RL call")}
 
   results <- list(preds,plot1)
   names(results) <- c("Predictions","RL_plot")
