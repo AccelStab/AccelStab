@@ -39,12 +39,12 @@ There is an option to view the prediction intervals as a ribbon. The
 prediction interval value is chosen in the step1.down function.
 }
 \examples{
-#data randomly generated for the purpose of the examples.
-data(example_data)
+#load antigenicity data
+data(antigenicity)
 
 #run step1.down fit
-fit1 <- step1_down(data = example_data, y = "conc", .time = "time",
- C = "Celsius",max_time_pred = 3)
+fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
+ C = "Celsius", max_time_pred = 3)
 
 #plot raw data with prediction curves and prediction intervals.
 step1_plot_PI(step1_down_object = fit1, xlim = NULL, ylim = NULL,

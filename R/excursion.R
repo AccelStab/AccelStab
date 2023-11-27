@@ -1,4 +1,4 @@
-#' @title excursion
+#' @title Temperature Excursion
 #'
 #' @description Predict a temperature excursion for a product.
 #'
@@ -31,22 +31,22 @@
 #'    }
 #'
 #' @examples
-#' #data randomly generated for the purpose of the examples.
-#' data(example_data)
+#' #load antigenicity
+#' data(antigenicity)
 #'
 #' #run step1.down fit
-#' fit1 <- step1_down(data = example_data, y = "conc", .time = "time",
-#'  C = "Celsius",max_time_pred = 3)
+#' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
+#'  C = "Celsius", max_time_pred = 3)
 #'
-#' #run excursion function.
-#' excursion<- excursion(step1_down_object = fit1,
-#'                       temp_changes = c(5,15,10),
-#'                       time_changes = c(0.5,1.5,3),
-#'                       CI = TRUE, PI = TRUE, draw = 10000,
-#'                       confidence_interval = 0.95,
-#'                       intercept = 80,
-#'                       xname = "Time in years", yname = "Concentration",
-#'                       ribbon = TRUE, plot_simulations = TRUE)
+#' #run excursion function with fixed intercept.
+#' excursion <- excursion(step1_down_object = fit1,
+#'                        temp_changes = c(5,15,10),
+#'                        time_changes = c(0.5,1.5,3),
+#'                        CI = TRUE, PI = TRUE, draw = 10000,
+#'                        confidence_interval = 0.95,
+#'                        intercept = 80,
+#'                        xname = "Time in years", yname = "Concentration",
+#'                        ribbon = TRUE, plot_simulations = TRUE)
 #'
 #' excursion$excursion_plot
 #'

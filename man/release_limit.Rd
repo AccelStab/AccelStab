@@ -49,14 +49,14 @@ Calculate the Release Limit for a product.
 Use the output from step1.down to run a release limit calculation.
 }
 \examples{
-#data randomly generated for the purpose of the examples.
-data(example_data)
+#load antigenicity data
+data(antigenicity)
 
 #run step1.down fit
-fit1 <- step1_down(data = example_data, y = "conc", .time = "time",
+fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
  C = "Celsius",max_time_pred = 3)
 
-release_lim <- release_limit(step1_down_object = fit1, shelf_temp = 5,shelf_time = 3,
+release_lim <- release_limit(step1_down_object = fit1, shelf_temp = 5, shelf_time = 3,
                              LSL = 45, interval = "CI", confidence_interval = 0.95)
 release_lim$RL_plot
 
