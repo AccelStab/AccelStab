@@ -34,21 +34,22 @@
 #'    functions in the package.
 #'    }
 #'
-#' @examples #data randomly generated for the purpose of the examples.
-#' data(example_data)
+#' @examples #load antigenicity and potency data.
+#' data(antigenicity)
+#' data(potency)
 #'
-#' #Basic use of the step1.down function with C column defined
-#' fit1 <- step1_down(data = example_data, y = "conc", .time = "time", C = "Celsius")
+#' #Basic use of the step1.down function with C column defined.
+#' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
 #'
 #' #Basic use of the step1.down function with K column defined.
-#' fit2 <- step1_down(data = example_data, y = "conc", .time = "time", K = "Kelvin")
+#' fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K")
 #'
-#' #zero_order is TRUE
-#' fit3 <- step1_down(data = example_data, y = "conc", .time = "time",C = "Celsius",
+#' #When zero_order = FALSE, the output suggests using zero_order = TRUE for Potency dataset.
+#' fit3 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",
 #'   reparameterisation = FALSE, zero_order = TRUE)
 #'
-#' #reparameterised is TRUE
-#' fit4 <- step1_down(data = example_data, y = "conc", .time = "time",C = "Celsius",
+#' #reparameterisation is TRUE.
+#' fit4 <- step1_down(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
 #'   reparameterisation = TRUE)
 #'
 #' @importFrom stats vcov coef runif confint rnorm quantile qt complete.cases

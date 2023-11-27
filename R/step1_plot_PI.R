@@ -17,12 +17,12 @@
 #' @return Plot of stability data with prediction curves and prediction intervals.
 #'
 #' @examples
-#' #data randomly generated for the purpose of the examples.
-#' data(example_data)
+#' #load antigenicity data
+#' data(antigenicity)
 #'
 #' #run step1.down fit
-#' fit1 <- step1_down(data = example_data, y = "conc", .time = "time",
-#'  C = "Celsius",max_time_pred = 3)
+#' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
+#'  C = "Celsius", max_time_pred = 3)
 #'
 #' #plot raw data with prediction curves and prediction intervals.
 #' step1_plot_PI(step1_down_object = fit1, xlim = NULL, ylim = NULL,

@@ -18,12 +18,12 @@
 #' @return Plot of stability data with prediction curves and confidence intervals.
 #'
 #' @examples
-#' #data randomly generated for the purpose of the examples.
-#' data(example_data)
+#' #load antigenciity data
+#' data(antigenicity)
 #'
 #' #run step1.down fit
-#' fit1 <- step1_down(data = example_data, y = "conc", .time = "time",
-#'  C = "Celsius",max_time_pred = 3)
+#' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
+#'  C = "Celsius", max_time_pred = 3, confidence_interval = 0.9)
 #'
 #' #plot raw data with prediction curves and confidence intervals.
 #' step1_plot_CI(step1_down_object = fit1, xlim = NULL, ylim = NULL,
@@ -34,7 +34,7 @@
 #' @export step1_plot_CI
 
 step1_plot_CI <- function (step1_down_object, xname = NULL, yname = NULL,
-                        xlim = NULL, ylim = NULL, ribbon = FALSE)
+                           xlim = NULL, ylim = NULL, ribbon = FALSE)
 {
   if (is.null(step1_down_object))
     stop("First, run the model")
