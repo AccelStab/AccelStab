@@ -1,4 +1,4 @@
-#' @title release_limit
+#' @title Release Limit
 #'
 #' @description Calculate the Release Limit for a product.
 #'
