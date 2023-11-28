@@ -37,7 +37,7 @@ The available functions within the package are as follows:
 Install AccelStab the following way -
 
 ``` r
-install.packages("AccelStab/AccelStab")
+install.packages("AccelStab")
 library(AccelStab)
 ```
 
