@@ -52,6 +52,11 @@
 #' fit4 <- step1_down(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
 #'   reparameterisation = TRUE)
 #'
+#' #If starting values for k1, k2, k3, and c0 are known then the 'parms' argument can be used.
+#' parms <- list(k1=65, k2=20000, k3=5, c0=100)
+#' fit5 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+#'  parms = parms)
+#'
 #' @importFrom stats vcov coef runif confint rnorm quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
 #' @importFrom mvtnorm rmvt
