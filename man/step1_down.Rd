@@ -67,7 +67,15 @@ Fit the one-step Šesták–Berggren kinetic model.
 }
 \details{
 Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-accelerated stability data.
+accelerated stability data.The minimum requirements for the function include
+the accelerated stability data, name of decreasing variable and time variable
+within the data plus the temperature column. The temperature column can be one
+of Kelvin or Celsius. If both K and C arguments are stated then C is dropped
+and K is prioritised.
+
+The optional arguments are detailed below. Note that if a row is missing a
+value for one of the decreasing variable, selected temperature, or time - it
+will be dropped.
 }
 \examples{
 #load antigenicity and potency data.
