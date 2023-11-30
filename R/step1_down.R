@@ -3,7 +3,15 @@
 #' @description Fit the one-step Šesták–Berggren kinetic model.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#'  accelerated stability data.
+#'  accelerated stability data.The minimum requirements for the function include
+#'  the accelerated stability data, name of decreasing variable and time variable
+#'  within the data plus the temperature column. The temperature column can be one
+#'  of Kelvin or Celsius. If both K and C arguments are stated then C is dropped
+#'  and K is prioritised.
+#'
+#'  The optional arguments are detailed below. Note that if a row is missing a
+#'  value for one of the decreasing variable, selected temperature, or time - it
+#'  will be dropped.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
@@ -73,52 +81,29 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL,
   if (!is.null(parms) & !is.list(parms))
     stop("The starting values for parameters must be a list, or keep as NULL")
 
-  user_parameters <- list(
-    data = data, y = y, .time = .time, K = K, C = C,draw = draw,
-    parms = parms, temp_pred_C = temp_pred_C, max_time_pred = max_time_pred,
-    confidence_interval = confidence_interval, by = by,
-    reparameterisation = reparameterisation, zero_order = zero_order
-  )
+  user_parameters <- list(data = data, y = y, .time = .time,
+                          K = K, C = C, draw = draw, parms = parms, temp_pred_C = temp_pred_C,
+                          max_time_pred = max_time_pred, confidence_interval = confidence_interval,
+                          by = by, reparameterisation = reparameterisation, zero_order = zero_order)
 
-  if(!is.null(C) & !is.null(K)) {
+  if(is.null(K) & !is.null(C))  {
+    dat <- data.frame(data[c(y,.time,C)])
+    colnames(dat) <- c("y","time","K")
+    dat$Celsius <- as.factor(dat$K)
+    dat$K <- dat$K + 273.15 }
+  else{
+    dat <- data.frame(data[c(y,.time,K)])
+    colnames(dat) <- c("y","time","K")
+    dat$Celsius <- as.factor(dat$K - 273.15)  }
 
-    data[, C] <- ifelse(is.na(data[, C]) & !is.na(data[, K]),
-                        data$K - 273.15,
-                        data[, C])
-
-    data[, K] <- ifelse(is.na(data[, K]) & !is.na(data[, C]),
-                        data$C + 273.15,
-                        data[, K])
-  }
-
-  data <- data[complete.cases(data[, c(C,K,y,.time)]), ]
-
-  dat = data
-
-  if (is.null(K))
-    dat$K = dat[, C] + 273.15
-  if (is.null(C)) {
-    dat$C = dat[, K] - 273.15
-    C = "C"}
-
+  dat <- dat[complete.cases(dat), ]
   Kref = mean(dat$K)
-  dat$Celsius = as.factor(dat[, C])
-  dat$time = dat[, .time]
-  dat$y = dat[, y]
-  if(.time != "time"){
-    dat <- dat[, !names(dat) %in% c(.time)]
-  }
-  if(y != "y"){
-    dat <- dat[, !names(dat) %in% c(y)]
-  }
-
   Temps = sort(unique(dat$K))
   if (!is.null(temp_pred_C))
     Temps = sort(c(Temps, temp_pred_C + 273.15))
   if (is.null(max_time_pred))
     max_time_pred = max(dat$time, na.rm = TRUE)
   times.pred = seq(0, max_time_pred, length.out = by)
-
 
   if(reparameterisation & zero_order){ # reparameterisation and k3 is 0
     MyFctNL = function(parms) { # Make function
