@@ -68,7 +68,7 @@ knitr::include_graphics("img/response_var.jpg")
  
 Now this is what is referred to as the ‘initial parameterisation’ with ‘3 kinetic parameters. The package does allow for both properties to be altered as the user desires. This grid gives an overview of those alterations and below the explanations for why one might use them are given.
 
-```{r echo=FALSE, fig.align="center"}
+```{r echo=FALSE, out.width='700px', out.height='200px', fig.align="center"}
 
 knitr::include_graphics("img/parameterisation.jpg")
 
