@@ -83,7 +83,7 @@ data(antigenicity)
 data(potency)
 
 #Basic use of the step1.down function with C column defined.
-fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
+\dontrun{fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
 
 #Basic use of the step1.down function with K column defined.
 fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K")
@@ -99,6 +99,6 @@ fit4 <- step1_down(data = antigenicity, y = "conc", .time = "time",C = "Celsius"
 #If starting values for k1, k2, k3, and c0 are known then the 'parms' argument can be used.
 parms <- list(k1=65, k2=20000, k3=5, c0=100)
 fit5 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
- parms = parms)
+ parms = parms)}
 
 }

@@ -69,7 +69,7 @@ Use the output from step1.down to run a temperature excursion prediction.
 data(antigenicity)
 
 #run step1.down fit
-fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
+\dontrun{fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
  C = "Celsius", max_time_pred = 3)
 
 #run excursion function with fixed intercept.
@@ -82,6 +82,6 @@ excursion <- excursion(step1_down_object = fit1,
                        xname = "Time in years", yname = "Concentration",
                        ribbon = TRUE, plot_simulations = TRUE)
 
-excursion$excursion_plot
+excursion$excursion_plot}
 
 }

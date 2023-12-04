@@ -45,7 +45,7 @@ chosen temperature with confidence and prediction intervals.
 data(potency)
 
 #run step1_down fit
-fit1 <- step1_down(data = potency, y = "Potency", .time = "Time",
+\dontrun{fit1 <- step1_down(data = potency, y = "Potency", .time = "Time",
  C = "Celsius", zero_order = TRUE)
 
 #plot raw data with prediction curves with focus on temperature in dataset.
@@ -54,6 +54,6 @@ step1_plot_T(fit1, focus_T = 5,ribbon = TRUE, xlim = NULL, ylim = c(0,12),
 
 #plot raw data with prediction curves with focus on temperature not in dataset.
 step1_plot_T(fit1, focus_T = -10,ribbon = TRUE, xlim = NULL, ylim = c(0,12),
- xname = "Time (Months)", yname = "Potency")
+ xname = "Time (Months)", yname = "Potency")}
 
 }
