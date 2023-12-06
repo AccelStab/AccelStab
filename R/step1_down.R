@@ -298,8 +298,14 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL,
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
-    if (k3 == 0){print("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
-    }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
+
+    if (k3 == 0)  {
+      message("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
+    }
+    else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0)
+    {message(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as "
+                    ,signif(k3,4),". We suggest considering option zero_order = TRUE"))}
+
     c0 = coef(fit)[4]
     SIG = vcov(fit)
     sigma = summary(fit)$sigma
@@ -379,8 +385,14 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL,
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
-    if (k3 == 0){print("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
-    }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
+
+    if (k3 == 0)  {
+      message("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
+    }
+    else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0)
+    {message(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as "
+                    ,signif(k3,4),". We suggest considering option zero_order = TRUE"))}
+
     c0 = coef(fit)[4]
     SIG = vcov(fit)
     sigma = summary(fit)$sigma
