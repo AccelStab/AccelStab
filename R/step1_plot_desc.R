@@ -22,9 +22,9 @@
 #' data(antigenicity)
 #' data(potency)
 #'
-#' step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius")
+#' plot1 <- step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius")
 #'
-#' step1_plot_desc(data=potency, y="Potency", .time="Time", C = "Celsius")
+#' plot2 <- step1_plot_desc(data=potency, y="Potency", .time="Time", C = "Celsius")
 #'
 #' @import ggplot2
 #'

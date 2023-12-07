@@ -43,11 +43,11 @@
 #'    }
 #'
 #' @examples #load antigenicity and potency data.
-#' data(antigenicity)
-#' data(potency)
+#' #data(antigenicity)
+#' #data(potency)
 #'
 #' #Basic use of the step1.down function with C column defined.
-#' \dontrun{fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
+#' \donttest{fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
 #'
 #' #Basic use of the step1.down function with K column defined.
 #' fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K")

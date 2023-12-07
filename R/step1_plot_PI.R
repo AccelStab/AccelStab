@@ -25,8 +25,8 @@
 #'  C = "Celsius", max_time_pred = 3)
 #'
 #' #plot raw data with prediction curves and prediction intervals.
-#' step1_plot_PI(step1_down_object = fit1, xlim = NULL, ylim = NULL,
-#'  xname = "Time (Years)", yname = "Concentration", ribbon = TRUE)
+#' plot1 <- step1_plot_PI(step1_down_object = fit1, xlim = NULL, ylim = NULL,
+#' xname = "Time (Years)", yname = "Concentration", ribbon = TRUE)
 #'
 #' @import ggplot2
 #'

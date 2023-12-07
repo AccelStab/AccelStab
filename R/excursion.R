@@ -35,7 +35,7 @@
 #' data(antigenicity)
 #'
 #' #run step1.down fit
-#' \dontrun{fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
+#' \donttest{fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
 #'  C = "Celsius", max_time_pred = 3)
 #'
 #' #run excursion function with fixed intercept.
@@ -48,7 +48,7 @@
 #'                        xname = "Time in years", yname = "Concentration",
 #'                        ribbon = TRUE, plot_simulations = TRUE)
 #'
-#' excursion$excursion_plot}
+#' plot <- excursion$excursion_plot}
 #'
 #' @import ggplot2
 #' @import dplyr
