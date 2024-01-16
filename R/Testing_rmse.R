@@ -1,0 +1,12 @@
+library("mvtnorm")
+
+load("~/CMC - Bayesian/AccelStab/data/antigenicity.rda")
+load("~/CMC - Bayesian/AccelStab/data/potency.rda")
+test1 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(100,99,98), k1 = c(40,50,60), k2 = c(14000,15000), k3 = c(5,6)))
+
+test2 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(100), k1 = c(40), k2 = c(14000), k3 = c(5,6)))
+
+fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", reparameterisation = T)
+
+test3 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(100,95), k1 = c(2,2.5), k2 = c(12000,13000), k3 = c(9,10)), reparameterisation = T)
+test4 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(100,95), k1 = c(2,2.5), k2 = c(12000,13000), k3 = c(9,10)), reparameterisation = F)

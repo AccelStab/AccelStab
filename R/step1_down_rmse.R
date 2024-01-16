@@ -39,12 +39,21 @@ step1_down_rmse <- function (data, y, .time, K = NULL, C = NULL,
     dat <- dat[, !names(dat) %in% c(y)]
   }
 
-  # I think the way to do it is make an expand grid of all the combos then add a rmse column on the end of that!
-
   result_grid <- expand.grid(parms) %>% mutate(rmse = NA)
 
   if(reparameterisation){
+    for (i in 1:dim(result_grid)[1]){
+      c0 <- result_grid[i,]$c0
+      k1 <- result_grid[i,]$k1
+      k2 <- result_grid[i,]$k2
+      k3 <- result_grid[i,]$k3
 
+      dat$Degradation = 1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2 / dat$K + k2 / Kref)))^(1/(1-k3))
+      dat$Response    = c0 - c0*dat$Degradation
+      dat$sqrResidual = (dat$Response - dat$y)^2
+
+      result_grid[i,'rmse'] <- sqrt(mean(dat$sqrResidual))
+    }
   }else{
     for (i in 1:dim(result_grid)[1]){
       c0 <- result_grid[i,]$c0
