@@ -1,5 +1,6 @@
 library("mvtnorm")
 library(dplyr)
+library(ggplot2)
 
 load("~/CMC - Bayesian/AccelStab/data/antigenicity.rda")
 load("~/CMC - Bayesian/AccelStab/data/potency.rda")
@@ -12,3 +13,29 @@ fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius
 
 test3 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(100,95), k1 = c(2,2.5), k2 = c(12000,13000), k3 = c(9,10)), reparameterisation = T)
 test4 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(100,95), k1 = c(2,2.5), k2 = c(12000,13000), k3 = c(9,10)), reparameterisation = F)
+
+
+# Now to deal with this validation data situation
+# First do it for the step1_plot_desc function
+
+antigenicity <- antigenicity %>% mutate(val = seq(1,50,1))
+step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius", validation = "val")
+
+antigenicity <- antigenicity %>% mutate(val = rep(c(0,1),25))
+step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius", validation = "val")
+
+antigenicity <- antigenicity %>% mutate(val = as.factor(rep(c(0,1),25)))
+step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius", validation = "val")
+step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius")
+
+antigenicity <- antigenicity %>% mutate(val = c(rep(c(0,1),24),NA,NA))
+step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius", validation = "val")
+
+# Now it needs to be added to step_1_down and the returned results$data frame before being put
+# into every one of the other plotting functions
+
+antigenicity <- antigenicity %>% mutate(val = rep(c(0,1),25))
+fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", reparameterisation = T)
+
+
+

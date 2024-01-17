@@ -11,6 +11,7 @@
 #' @param .time Time variable contained within data (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
+#' @param validation Validation dummy variable (column name) (optional).
 #' @param draw Number of simulations used to estimate confidence intervals.
 #' @param parms Starting values for the parameters as a list - k1, k2, k3, and c0.
 #' @param temp_pred_C Integer or numeric value to predict the response for a
@@ -58,7 +59,7 @@
 #'
 #' @export step1_down
 
-step1_down <- function (data, y, .time, K = NULL, C = NULL,
+step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
                         draw = 10000, parms = NULL, temp_pred_C = NULL,
                         max_time_pred = NULL, confidence_interval = 0.95, by = 101,
                         reparameterisation = FALSE, zero_order = FALSE){
@@ -90,6 +91,10 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL,
 
   dat = data
 
+  if (!is.null(validation))
+    if (!all(dat[,validation] %in% c(0,1)))
+      stop("Validation column must contain 1s and 0s only")
+
   if (is.null(K))
     dat$K = dat[, C] + 273.15
   if (is.null(C)) {
@@ -100,6 +105,10 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL,
   dat$Celsius = as.factor(dat[, C])
   dat$time = dat[, .time]
   dat$y = dat[, y]
+  dat$validation = ifelse(dat[,validation] == 0, "Fit", "Validation")
+  if(validation != "validation"){
+    dat <- dat[, !names(dat) %in% c(validation)]
+  }
   if(.time != "time"){
     dat <- dat[, !names(dat) %in% c(.time)]
   }
