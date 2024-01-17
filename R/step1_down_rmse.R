@@ -1,8 +1,8 @@
-#' @title Step1 Down Model rmse Calculation
+#' @title Step1 Down Model Root Mean Square Error Calculation
 #'
-#' @description Calculate rmse for the one-step Šesták–Berggren kinetic model.
+#' @description Calculate Root Mean Square Error for the one-step Šesták–Berggren kinetic model.
 #'
-#' @details Calculate rmse for the one-step Šesták–Berggren kinetic (non-linear) model using
+#' @details Calculate rmse (Root Mean Square Error) for the one-step Šesták–Berggren kinetic (non-linear) model using
 #'  user provided parameters.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
