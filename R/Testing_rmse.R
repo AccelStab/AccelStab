@@ -45,7 +45,7 @@ step1_plot_pred(fit2)
 step1_plot_T(fit2, focus_T = 5, ribbon = F)
 
 # Now for excursion and RL
-exc1 <- excursion(fit1,temp_changes = c(5,35,5), time_changes = c(0.5,1,3))
+exc1 <- excursion(fit2,temp_changes = c(5,35,5), time_changes = c(0.5,1,3), intercept = 95)
 exc1$excursion_plot
 
 
