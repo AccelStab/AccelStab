@@ -33,6 +33,7 @@
 #'  xname = "Time (Months)", yname = "Potency")
 #'
 #' @import ggplot2
+#' @import scales
 #'
 #' @export step1_plot_T
 
@@ -95,6 +96,9 @@ step1_plot_T <- function (step1_down_object, focus_T = NULL, xname = NULL, yname
   lines_t <- c("solid","dotted","longdash")
   names(lines_t) <- c("Prediction",confidence_i,prediction_i)
 
+  colour_t <- scales::hue_pal()(length(unique(pred$Celsius)))
+  names(colour_t) <- as.character(unique(pred$Celsius))
+
   plot = ggplot() +
    labs( x = xname, y = yname) +
     {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
@@ -108,7 +112,9 @@ step1_plot_T <- function (step1_down_object, focus_T = NULL, xname = NULL, yname
    geom_line(data=pred[xx,], mapping=aes(x= time, y = PI1, colour = Celsius, linetype = prediction_i)) +
    geom_line(data=pred[xx,], mapping=aes(x= time, y = PI2, colour = Celsius, linetype = prediction_i)) +
    geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation)) +
-   scale_linetype_manual(name = NULL, values=lines_t) +
+   scale_linetype_manual(name = NULL, values = lines_t) +
+   scale_colour_manual(name = "Celsius", values = colour_t) +
+   scale_fill_manual(name = NULL, values = colour_t) +
    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
 
