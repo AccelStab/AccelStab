@@ -1,6 +1,7 @@
 library("mvtnorm")
 library(dplyr)
 library(ggplot2)
+library(scales)
 
 load("~/CMC - Bayesian/AccelStab/data/antigenicity.rda")
 load("~/CMC - Bayesian/AccelStab/data/potency.rda")
@@ -35,7 +36,18 @@ step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius", valida
 # into every one of the other plotting functions
 
 antigenicity <- antigenicity %>% mutate(val = rep(c(0,1),25))
-fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", reparameterisation = T)
+fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
+fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "val")
+
+step1_plot_CI(fit2, ribbon = T)
+step1_plot_PI(fit2, ribbon = T)
+step1_plot_pred(fit2)
+step1_plot_T(fit2, focus_T = 5, ribbon = F)
+
+# Now for excursion and RL
+exc1 <- excursion(fit1,temp_changes = c(5,35,5), time_changes = c(0.5,1,3))
+exc1$excursion_plot
+
 
 
 
