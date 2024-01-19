@@ -46,13 +46,20 @@ step1_plot_pred <- function (step1_down_object, xname = NULL, yname = NULL,
                             legend.text = element_text(size = 13),
                             legend.title = element_text(size = 13))
 
-  plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius)) +
+  validation = step1_down_object$user_parameters$validation
+  if(!is.null(validation)){
+    shape_types <- c(16,1)
+    names(shape_types) <- c("Fit", "Validation")
+  }
+
+  plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation)) +
    labs( x = xname, y = yname) +
    {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
    {if(!is.null(ylim))scale_y_continuous(limits = ylim)} +
    mytheme +
    geom_line(data=pred, mapping=aes(x= time, y = Response, colour = Celsius)) +
    scale_linetype_manual(name = NULL, values=c("solid", "dotted", "longdash")) +
+   {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
 
   return(plot)

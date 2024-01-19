@@ -70,7 +70,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     stop("The starting values for parameters must be a list, or keep as NULL")
 
   user_parameters <- list(
-    data = data, y = y, .time = .time, K = K, C = C,draw = draw,
+    data = data, y = y, .time = .time, K = K, C = C, validation = validation,draw = draw,
     parms = parms, temp_pred_C = temp_pred_C, max_time_pred = max_time_pred,
     confidence_interval = confidence_interval, by = by,
     reparameterisation = reparameterisation, zero_order = zero_order
