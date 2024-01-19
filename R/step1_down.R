@@ -105,9 +105,11 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
   dat$Celsius = as.factor(dat[, C])
   dat$time = dat[, .time]
   dat$y = dat[, y]
-  dat$validation = ifelse(dat[,validation] == 0, "Fit", "Validation")
-  if(validation != "validation"){
-    dat <- dat[, !names(dat) %in% c(validation)]
+  if(!is.null(validation)){
+    dat$validation = ifelse(dat[,validation] == 0, "Fit", "Validation")
+    if(validation != "validation"){
+      dat <- dat[, !names(dat) %in% c(validation)]
+    }
   }
   if(.time != "time"){
     dat <- dat[, !names(dat) %in% c(.time)]
@@ -123,6 +125,10 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     max_time_pred = max(dat$time, na.rm = TRUE)
   times.pred = seq(0, max_time_pred, length.out = by)
 
+  dat_full <- dat
+  if(!is.null(validation)){
+    dat <- dat[dat$validation == "Fit",]
+  }
 
   if(reparameterisation & zero_order){ # reparameterisation and k3 is 0
     MyFctNL = function(parms) { # Make function
@@ -456,7 +462,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     pred$PI1 = PI1b
     pred$PI2 = PI2b}
 
-  results = list(fit, dat, pred,user_parameters)
+  results = list(fit, dat_full, pred,user_parameters)
   names(results) = c("fit", "data", "prediction","user_parameters")
   class(results) = "SB"
   return(results)
