@@ -1,46 +1,35 @@
-#' @title  Plot Diagnostic Plots
+#' @title  Create Diagnostic Plots
 #'
-#' @description Plot the .
+#' @description Plot the residual diagnostic plots from a step1_down fit.
 #'
-#' @details Use the fit object obtained from the step1.down function to plot the
-#'  .
+#' @details Use the fit object obtained from the step1_down function to plot the
+#' residual diagnostic plots and assess the quality of the fit, also search for anomalies.
 #'
-#' @param step1_down_object The fit object from the step1.down function (required).
-#' @param xname Label for the x-axis (optional).
-#' @param yname Label for the y-axis (optional).
-#' @param xlim x-axis limits (optional).
-#' @param ylim y-axis limits (optional).
-#' @param ribbon Add shade to prediction intervals (optional).
+#' @param step1_down_object The fit object from the step1_down function (required).
+#' @param bins The number of bins in the Histogram plot (default 7).
 #'
-#' @return Plot of .
+#' @return Plot of .....
 #'
 #' @examples
 #' #load antigenicity data
 #' data(antigenicity)
 #'
-#' #run step1.down fit
+#' #run step1_down fit
 #' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
 #'  C = "Celsius", max_time_pred = 3)
 #'
-#' #plot raw data with prediction curves and prediction intervals.
-#' step1_plot_PI(step1_down_object = fit1, xlim = NULL, ylim = NULL,
-#'  xname = "Time (Years)", yname = "Concentration", ribbon = TRUE)
+#' #plot diagnostic plots to asses the fit
+#' step1_plot_diagnostic(fit1)
 #'
 #' @import ggplot2
 #'
 #' @export step1_plot_diagnostic
 
-step1_plot_diagnostic <- function (step1_down_object, xname = NULL, yname = NULL,
-                           xlim = NULL, ylim = NULL, ribbon = FALSE)
+step1_plot_diagnostic <- function(step1_down_object, bins = 7)
 {
   if (is.null(step1_down_object))
     stop("First, run the model")
-  if (is.null(xname))
-    xname = "Time"
-  if (is.null(yname))
-    yname = "Response Variable"
   dat = step1_down_object$data
-  pred = step1_down_object$prediction
 
   mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element_rect(fill = "white"),
                             legend.key = element_rect(fill = "white"), legend.key.width = unit(2,"cm"),
@@ -51,28 +40,48 @@ step1_plot_diagnostic <- function (step1_down_object, xname = NULL, yname = NULL
 
   validation = step1_down_object$user_parameters$validation
   if(!is.null(validation)){
-    shape_types <- c(16,1)
-    names(shape_types) <- c("Fit", "Validation")
+    dat <- dat[dat$validation == "Fit",]
   }
 
-  prediction_i <- paste0(step1_down_object$user_parameters$confidence_interval * 100," % PI")
-  line_types <- if(ribbon){c("solid", "dotted")}else{c("dotted", "solid")}
-  names(line_types) <- c("Prediction",prediction_i)
+  dat$residuals <- summary(step1_down_object$fit)$residuals
 
-  plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation))  +
-    labs( x = xname, y = yname) +
-    {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
-    {if(!is.null(ylim))scale_y_continuous(limits = ylim)} +
-    mytheme  +
-    geom_line(data=pred, mapping=aes(x= time, y = Response, colour = Celsius, linetype = "Prediction")) +
-    geom_line(data=pred, mapping=aes(x= time, y = PI1, colour = Celsius, linetype = prediction_i)) +
-    geom_line(data=pred, mapping=aes(x= time, y = PI2, colour = Celsius, linetype = prediction_i)) +
-    {if(ribbon)geom_ribbon(data=pred, aes(x = time, ymin=PI1, ymax=PI2, fill = Celsius), alpha=0.08, show.legend = FALSE)} +
-    scale_linetype_manual(name = NULL, values = line_types) +
-    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
-    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
+  dat$predicted <- dat$y - dat$residuals
 
-  return(plot)
+  # Histogram plot
+
+  res_histo = ggplot(dat, aes(x = residuals)) +
+    geom_histogram(aes(y =..density..),
+                   breaks = seq(min(dat$residuals), max(dat$residuals), by = bins),
+                   colour = "black",
+                   fill = "white") +
+    stat_function(fun = dnorm, args = list(mean = mean(dat$residuals), sd = sd(dat$residuals)),
+                  xlim = c(min(dat$residuals), max(dat$residuals)),
+                  col = "turquoise",
+                  linewidth = 1,
+                  alpha = 0.6) + ggtitle ("Residuals Histogram") + xlab("Residuals") + ylab("Density") +
+    mytheme
+
+
+  # observed vs predicted
+
+  obs_pred = ggplot() + geom_point(data = dat, mapping = aes(x = predicted, y = y, colour = Celsius)) +
+    geom_smooth(data = dat, method ="lm", formula = y ~ x, mapping = aes(x = predicted, y = y)) +
+    labs( x = "Predicted response", y = "Observed data")+
+    ggtitle ("Observed Vs Predicted") +
+    mytheme
+
+  # residuals vs predicted
+  res_pred = ggplot() + geom_point(data = dat, mapping = aes(x = predicted, y = residuals, colour = Celsius)) +
+    labs( x = "Predicted response", y = "Residuals") +
+    geom_hline(yintercept=0, linetype="solid", color = "black")+
+    ggtitle ("Residuals Vs Predicted") +
+    mytheme
+
+  # QQplot
+  qqplot <- ggplot(as.data.frame(dat), aes(sample = residuals)) +
+    stat_qq(aes(colour = Celsius)) + stat_qq_line() +
+    ggtitle ("Q-Q Plot") + xlab("Theoretical Quantiles") + ylab("Sample Quantiles")+
+    mytheme
+
+  return(qqplot)
 }
-
-globalVariables(c('PI1','PI2'))

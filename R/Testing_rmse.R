@@ -44,10 +44,13 @@ step1_plot_PI(fit2, ribbon = T)
 step1_plot_pred(fit2)
 step1_plot_T(fit2, focus_T = 5, ribbon = F)
 
-# Now for excursion and RL
+# Now for excursion and RL ... dont think these need changing actually
 exc1 <- excursion(fit2,temp_changes = c(5,35,5), time_changes = c(0.5,1,3), intercept = 95)
 exc1$excursion_plot
 
+# Testing the diagnostic plotting capabilites
+antigenicity <- antigenicity %>% mutate(val = rbinom(50,1,0.2))
+fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "val")
 
-
+step1_plot_diagnostic(fit2)
 

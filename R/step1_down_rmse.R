@@ -1,22 +1,20 @@
 #' @title Step1 Down Model Root Mean Square Error Calculation
 #'
-#' @description Calculate Root Mean Square Error for the one-step Šesták–Berggren kinetic model.
+#' @description Calculate Root Mean Square Error (RMSE) for the one-step Šesták–Berggren kinetic model.
 #'
-#' @details Calculate rmse (Root Mean Square Error) for the one-step Šesták–Berggren kinetic (non-linear) model using
+#' @details Calculate RMSE for the one-step Šesták–Berggren kinetic (non-linear) model using
 #'  user provided parameters.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
-#' @param y Name of decreasing variable (e.g. concentration) contained within data
-#'  (required).
+#' @param y Name of decreasing variable (e.g. concentration) contained within data (required).
 #' @param .time Time variable contained within data (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
 #' @param parms Values for the parameters as a list - k1, k2, k3, and c0. If multiple are provided all combinations will be used (required).
 #' @param reparameterisation Use alternative parameterisation of the one-step
 #'  model which aims to reduce correlation between k1 and k2.
-
 #'
-#' @return A data frame containing one row for each rmse calculation
+#' @return A data frame containing one row for each RMSE calculation
 #'
 #' @examples #load antigenicity and potency data.
 #' data(antigenicity)
