@@ -10,6 +10,7 @@ step1_down(
   .time,
   K = NULL,
   C = NULL,
+  validation = NULL,
   draw = 10000,
   parms = NULL,
   temp_pred_C = NULL,
@@ -31,6 +32,8 @@ step1_down(
 \item{K}{Kelvin variable (numeric or column name) (optional).}
 
 \item{C}{Celsius variable (numeric or column name) (optional).}
+
+\item{validation}{Validation dummy variable (column name) (optional).}
 
 \item{draw}{Number of simulations used to estimate confidence intervals.}
 

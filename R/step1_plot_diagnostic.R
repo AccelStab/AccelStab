@@ -83,5 +83,7 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7)
     ggtitle ("Q-Q Plot") + xlab("Theoretical Quantiles") + ylab("Sample Quantiles")+
     mytheme
 
-  return(qqplot)
+  results = list(res_histo,obs_pred,res_pred,qqplot)
+  names(results) = c("Residuals_Histogram","Observed_V_Predicted","Residuals_V_Predicted","Q_Q_Plot")
+  return(results)
 }
