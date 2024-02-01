@@ -52,7 +52,7 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7)
 
   res_histo = ggplot(dat, aes(x = residuals)) +
     geom_histogram(aes(y =..density..),
-                   breaks = seq(min(dat$residuals), max(dat$residuals), by = bins),
+                   breaks = seq(min(dat$residuals), max(dat$residuals), by = (max(dat$residuals) - min(dat$residuals))/bins),
                    colour = "black",
                    fill = "white") +
     stat_function(fun = dnorm, args = list(mean = mean(dat$residuals), sd = sd(dat$residuals)),
