@@ -12,7 +12,7 @@ step1_plot_diagnostic(step1_down_object, bins = 7)
 \item{bins}{The number of bins in the Histogram plot (default 7).}
 }
 \value{
-Plot of .....
+A list of the four ggplot2 plots.
 }
 \description{
 Plot the residual diagnostic plots from a step1_down fit.
@@ -20,6 +20,7 @@ Plot the residual diagnostic plots from a step1_down fit.
 \details{
 Use the fit object obtained from the step1_down function to plot the
 residual diagnostic plots and assess the quality of the fit, also search for anomalies.
+Plots created are: Residuals Histogram, Observed Vs Predicted results, Residuals Vs Predicted and QQplot of Residuals.
 }
 \examples{
 #load antigenicity data

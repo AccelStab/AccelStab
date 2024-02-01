@@ -4,11 +4,12 @@
 #'
 #' @details Use the fit object obtained from the step1_down function to plot the
 #' residual diagnostic plots and assess the quality of the fit, also search for anomalies.
+#' Plots created are: Residuals Histogram, Observed Vs Predicted results, Residuals Vs Predicted and QQplot of Residuals.
 #'
 #' @param step1_down_object The fit object from the step1_down function (required).
 #' @param bins The number of bins in the Histogram plot (default 7).
 #'
-#' @return Plot of .....
+#' @return A list of the four ggplot2 plots.
 #'
 #' @examples
 #' #load antigenicity data
