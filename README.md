@@ -31,6 +31,12 @@ The available functions within the package are as follows:
 -   `step1_plot_T()` Plot the stability data and visualise the
     predictions with focus on one temperature.
 -   `excursion()` Predict a temperature excursion for a product.
+-   `step1_down_rmse()` Calculate Root Mean Square Error (RMSE) 
+    for the one-step Šesták–Berggren kinetic model.
+-   `step1_plot_diagnostic()` Generate residual diagnostic plots 
+    from a step1_down fit.
+-   `step1_sample_mvt()` Take a selected number of samples from 
+    the multivariate t distribution.
 
 ## Installation
 
