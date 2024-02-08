@@ -1,8 +1,10 @@
-#' @title Sample Multivariate t Distribution
+#' @title Sample the Multivariate t Distribution
 #'
 #' @description Take a selected number of samples from the multivariate t distribution (mvt).
 #'
-#' @details Using provided data draw a selected number of samples from the mvt of the Šesták–Berggren kinetic model parameters.
+#' @details Using the provided data the function creates a fit of the
+#'  Šesták–Berggren kinetic model and then draws a selected number of
+#'   samples from the mvt of the model parameters.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
@@ -17,20 +19,22 @@
 #'  model which aims to reduce correlation between k1 and k2.
 #' @param zero_order Set kinetic order, k3, to zero (straight lines).
 #'
-#' @return A matrix containing parameter draws from the mvt distribution
+#' @return A matrix containing parameter draws from the mvt distribution.
 #'
 #' @examples #load antigenicity data.
 #' data(antigenicity)
 #'
 #' #Basic use of the step1_sample_mvt function with C column defined and 1000 draws.
-#' sample1 <- step1_sample_mvt(data = antigenicity, y = "conc", .time = "time", C = "Celsius", draw = 1000)
+#' sample1 <- step1_sample_mvt(data = antigenicity, y = "conc", .time = "time",
+#'  C = "Celsius", draw = 1000)
 #'
 #' #Basic use of the step1_sample_mvt function with K column defined and 50000 draws
-#' sample2 <- step1_sample_mvt(data = antigenicity, y = "conc", .time = "time", K = "K", draw = 50000)
+#' sample2 <- step1_sample_mvt(data = antigenicity, y = "conc", .time = "time",
+#'  K = "K", draw = 50000)
 #'
 #' #reparameterisation is TRUE and 10000 draws.
-#' sample3 <- step1_sample_mvt(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
-#'   reparameterisation = TRUE, draw = 10000)
+#' sample3 <- step1_sample_mvt(data = antigenicity, y = "conc", .time = "time",
+#' C = "Celsius", reparameterisation = TRUE, draw = 10000)
 #'
 #' @importFrom stats vcov coef runif confint rnorm quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
@@ -314,6 +318,6 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
 
 }
 
-
+globalVariables(c('pred'))
 
 

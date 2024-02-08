@@ -46,12 +46,17 @@ data(antigenicity)
 data(potency)
 
 #Basic use of the step1_down_rmse function with C column defined.
-rmse1 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(96,98,100), k1 = c(42,45), k2 = c(12000,12500), k3 = c(8,9,10)))
+rmse1 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time",
+ C = "Celsius", parms = list(c0 = c(96,98,100), k1 = c(42,45),
+  k2 = c(12000,12500), k3 = c(8,9,10)))
 
 #Basic use of the step1_down_rmse function with K column defined.
-rmse2 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", K = "K", parms = list(c0 = c(98), k1 = c(42,45), k2 = c(12500), k3 = c(8,9)))
+rmse2 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time",
+ K = "K", parms = list(c0 = c(98), k1 = c(42,45), k2 = c(12500), k3 = c(8,9)))
 
 #reparameterisation is TRUE.
-rmse3 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time", C = "Celsius", parms = list(c0 = c(100,95), k1 = c(2,2.5), k2 = c(12000,13000), k3 = c(9,10)), reparameterisation = T)
+rmse3 <- step1_down_rmse(data = antigenicity, y = "conc", .time = "time",
+ C = "Celsius", parms = list(c0 = c(100,95), k1 = c(2,2.5), k2 = c(12000,13000),
+  k3 = c(9,10)), reparameterisation = TRUE)
 
 }

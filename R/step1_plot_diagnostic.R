@@ -1,15 +1,16 @@
 #' @title  Create Diagnostic Plots
 #'
-#' @description Plot the residual diagnostic plots from a step1_down fit.
+#' @description Generate residual diagnostic plots from a step1_down fit.
 #'
 #' @details Use the fit object obtained from the step1_down function to plot the
-#' residual diagnostic plots and assess the quality of the fit, also search for anomalies.
-#' Plots created are: Residuals Histogram, Observed Vs Predicted results, Residuals Vs Predicted and QQplot of Residuals.
+#' residual diagnostic plots, assess the quality of fit and search for anomalies.
+#' Plots created are: Residuals Histogram, Observed Vs Predicted results, Residuals
+#'  Vs Predicted results and QQplot of Residuals.
 #'
 #' @param step1_down_object The fit object from the step1_down function (required).
 #' @param bins The number of bins in the Histogram plot (default 7).
 #'
-#' @return A list of the four ggplot2 plots.
+#' @return A list containing the four ggplot2 plots.
 #'
 #' @examples
 #' #load antigenicity data
@@ -23,6 +24,7 @@
 #' step1_plot_diagnostic(fit1)
 #'
 #' @import ggplot2
+#' @importFrom stats dnorm sd
 #'
 #' @export step1_plot_diagnostic
 
@@ -51,7 +53,7 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7)
   # Histogram plot
 
   res_histo = ggplot(dat, aes(x = residuals)) +
-    geom_histogram(aes(y =..density..),
+    geom_histogram(aes(y = after_stat(density)),
                    breaks = seq(min(dat$residuals), max(dat$residuals), by = (max(dat$residuals) - min(dat$residuals))/bins),
                    colour = "black",
                    fill = "white") +
@@ -88,3 +90,8 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7)
   names(results) = c("Residuals_Histogram","Observed_V_Predicted","Residuals_V_Predicted","Q_Q_Plot")
   return(results)
 }
+
+globalVariables(c('residuals','density','predicted'))
+
+
+
