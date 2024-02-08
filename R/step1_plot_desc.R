@@ -10,6 +10,7 @@
 #' @param .time Time variable contained within data.
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
+#' @param validation Validation dummy variable (column name) (optional).
 #' @param xname Label for the x-axis (optional).
 #' @param yname Label for the y-axis (optional).
 #' @param xlim x-axis limits (optional).
@@ -30,17 +31,19 @@
 #'
 #' @export step1_plot_desc
 
-step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL,
+step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
                              xname = NULL, yname = NULL, xlim = NULL, ylim = NULL){
 
   if (is.null(K) & is.null(C))
     stop("Select the temperature variable in Kelvin or Celsius")
+  dat = data
+  if (!is.null(validation))
+    if (!all(dat[,validation] %in% c(0,1)))
+      stop("Validation column must contain 1s and 0s only")
   if (is.null(xname))
     xname = "Time"
   if (is.null(yname))
     yname = "Response Variable"
-
-  dat = data
 
   if (is.null(C)){
     dat$C = dat[, K] - 273.15
@@ -51,6 +54,12 @@ step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL,
 
   dat$time = dat[, .time]
   dat$y = dat[, y]
+  if(!is.null(validation)){
+    dat$validation = ifelse(dat[,validation] == 0, "Fit", "Validation")
+    shape_types <- c(16,1)
+    names(shape_types) <- c("Fit", "Validation")
+  }
+
 
   mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element_rect(fill = "white"),
                             legend.key = element_rect(fill = "white"), legend.key.width = unit(2,"cm"),
@@ -59,12 +68,14 @@ step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL,
                             legend.text = element_text(size = 13),
                             legend.title = element_text(size = 13))
 
-  plot <- ggplot2::ggplot(dat, aes(time, y, colour = Celsius)) + ggplot2::geom_point() +
+  plot <- ggplot2::ggplot(dat, aes(time, y, colour = Celsius)) + ggplot2::geom_point(mapping = aes(shape = validation)) +
    ggplot2::stat_summary(fun = mean, geom = "line") +
    labs( x = xname, y = yname) +
    {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
    {if(!is.null(ylim))scale_y_continuous(limits = ylim)} +
-   mytheme
+   {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
+   mytheme +
+   theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
 
   return(plot)
 

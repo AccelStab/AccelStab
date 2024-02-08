@@ -52,11 +52,17 @@ step1_plot_CI <- function (step1_down_object, xname = NULL, yname = NULL,
                             legend.text = element_text(size = 13),
                             legend.title = element_text(size = 13))
 
+  validation = step1_down_object$user_parameters$validation
+  if(!is.null(validation)){
+    shape_types <- c(16,1)
+    names(shape_types) <- c("Fit", "Validation")
+  }
+
   confidence_i <- paste0(step1_down_object$user_parameters$confidence_interval * 100," % CI")
   line_types <- if(ribbon){c("solid", "dotted")}else{c("dotted", "solid")}
   names(line_types) <- c("Prediction",confidence_i)
 
-  plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius))  +
+  plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation))  +
    labs( x = xname, y = yname) +
    {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
    {if(!is.null(ylim))scale_y_continuous(limits = ylim)} +
@@ -66,6 +72,7 @@ step1_plot_CI <- function (step1_down_object, xname = NULL, yname = NULL,
    geom_line(data=pred, mapping=aes(x= time, y = CI2, colour = Celsius, linetype = confidence_i)) +
    scale_linetype_manual(name = NULL, values = line_types) +
    {if(ribbon)geom_ribbon(data=pred, aes(x = time, ymin=CI1, ymax=CI2, fill = Celsius), alpha=0.13, show.legend = FALSE)} +
+   {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
 
   return(plot)

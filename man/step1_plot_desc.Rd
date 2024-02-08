@@ -10,6 +10,7 @@ step1_plot_desc(
   .time,
   K = NULL,
   C = NULL,
+  validation = NULL,
   xname = NULL,
   yname = NULL,
   xlim = NULL,
@@ -26,6 +27,8 @@ step1_plot_desc(
 \item{K}{Kelvin variable (numeric or column name) (optional).}
 
 \item{C}{Celsius variable (numeric or column name) (optional).}
+
+\item{validation}{Validation dummy variable (column name) (optional).}
 
 \item{xname}{Label for the x-axis (optional).}
 

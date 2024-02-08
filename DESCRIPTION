@@ -16,7 +16,7 @@ Description: Estimate the Šesták–Berggren kinetic model (degradation model) 
   vaccines development.
 License: AGPL (>= 3)
 Encoding: UTF-8
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Imports: 
     dplyr,
     ggplot2,
