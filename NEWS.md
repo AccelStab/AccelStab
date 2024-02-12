@@ -1,22 +1,6 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # AccelStab 2.0.0
 
 This is a major release adding a few new functions and fixing a bug.
-
-## Breaking changes
-
--   `step1_down()` now accepts an extra argument `validation` which
-    sidelines some of the data allowing the user to save it for testing
-    purposes
-
--   `step1_plot_desc()` now accepts an extra argument `validation` which
-    sidelines some of the data allowing the user to save it for testing
-    purposes
 
 ## New features
 
@@ -29,6 +13,14 @@ This is a major release adding a few new functions and fixing a bug.
 -   `step1_sample_mvt()` added which allows the user to draw a chosen
     number of sample parameters from the multivariate t distribution for
     their own analyses
+    
+-   `step1_down()` now accepts an extra argument `validation` which
+    sidelines some of the data allowing the user to save it for testing
+    purposes
+
+-   `step1_plot_desc()` now accepts an extra argument `validation` which
+    sidelines some of the data allowing the user to save it for testing
+    purposes
 
 ## Bug fixes
 
