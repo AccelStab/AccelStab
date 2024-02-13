@@ -27,6 +27,10 @@ This is a major release adding a few new functions and fixing a bug.
 -   When selecting a temperature outside the data set for
     `step1_plot_T()` the colours of the prediction line and the ribbon
     are now consistent
+-   When using the argument `temp_pred_C` within `step1_down()` no longer
+    are predictions duplicated if the temperature is already in the data
+-   Issue when no time = 0 rows present in the data and no `parms` provided
+    to `step1_down()` now resolved
 
 # AccelStab 1.0.0
 
