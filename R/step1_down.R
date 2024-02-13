@@ -120,7 +120,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
 
   Temps = sort(unique(dat$K))
   if (!is.null(temp_pred_C))
-    Temps = sort(c(Temps, temp_pred_C + 273.15))
+    Temps = unique(sort(c(Temps, temp_pred_C + 273.15)))
   if (is.null(max_time_pred))
     max_time_pred = max(dat$time, na.rm = TRUE)
   times.pred = seq(0, max_time_pred, length.out = by)
@@ -128,6 +128,19 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
   dat_full <- dat
   if(!is.null(validation)){
     dat <- dat[dat$validation == "Fit",]
+  }
+
+  if(is.null(parms)){
+    sorted_data <- dat[order(dat$time), ]
+
+    min_time <- min(sorted_data$time)
+
+    if (sum(sorted_data$time == min_time) > 3) {
+      selected_rows <- sorted_data$time == min_time
+    } else {
+      selected_rows <- seq_len(min(3, nrow(sorted_data)))
+    }
+    c0_initial <- mean(sorted_data$y[selected_rows])
   }
 
   if(reparameterisation & zero_order){ # reparameterisation and k3 is 0
@@ -149,7 +162,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     else {
       repeat {
         parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1,
-                                                                    1000, 20000), c0 = mean(dat$y[dat$time == 0]))
+                                                                    1000, 20000), c0 = c0_initial)
         fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
                                                   fn = MyFctNL, lower = rep(0, length(parms))))
         res = tryCatch({
@@ -226,7 +239,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     else {
       repeat {
         parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1,
-                                                                    1000, 20000), c0 = mean(dat$y[dat$time == 0]))
+                                                                    1000, 20000), c0 = c0_initial)
         fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
                                                   fn = MyFctNL, lower = rep(0, length(parms))))
         res = tryCatch({
@@ -302,7 +315,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     else {
       repeat {
         parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1,
-                                                                    1000, 20000), k3 = stats::runif(1, 0, 11), c0 = mean(dat$y[dat$time == 0]))
+                                                                    1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
         fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
                                                   fn = MyFctNL, lower = rep(0, length(parms))))
         res = tryCatch({
@@ -384,7 +397,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     else {
       repeat {
         parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1,
-                                                                    1000, 20000), k3 = stats::runif(1, 0, 11), c0 = mean(dat$y[dat$time == 0]))
+                                                                    1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
         fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
                                                   fn = MyFctNL, lower = rep(0, length(parms))))
         res = tryCatch({
