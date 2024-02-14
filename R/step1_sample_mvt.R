@@ -126,7 +126,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }
@@ -179,7 +179,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }
@@ -228,7 +228,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }
@@ -281,7 +281,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }

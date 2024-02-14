@@ -171,7 +171,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }
@@ -248,7 +248,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }
@@ -324,7 +324,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }
@@ -406,7 +406,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
         res2 = tryCatch({
           stats::vcov(fit)
         }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) & !inherits(res, "error") &
+        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
             !inherits(res2, "error"))
           (break)()
       }
