@@ -78,17 +78,17 @@ data(antigenicity)
 data(potency)
 
 #Basic use of the step1.down function with C column defined.
-fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
+fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", draw = 5000)
 
 #Basic use of the step1.down function with K column defined.
-fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K")
+fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K", draw = 5000)
 
 #When zero_order = FALSE, the output suggests using zero_order = TRUE for Potency dataset.
 fit3 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",
-  reparameterisation = FALSE, zero_order = TRUE)
+  reparameterisation = FALSE, zero_order = TRUE, draw = 5000)
 
 #reparameterisation is TRUE.
 fit4 <- step1_down(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
-  reparameterisation = TRUE)
+  reparameterisation = TRUE, draw = 5000)
 
 }

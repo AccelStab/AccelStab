@@ -42,7 +42,7 @@
 #' excursion <- excursion(step1_down_object = fit1,
 #'                        temp_changes = c(5,15,10),
 #'                        time_changes = c(0.5,1.5,3),
-#'                        CI = TRUE, PI = TRUE, draw = 10000,
+#'                        CI = TRUE, PI = TRUE, draw = 4000,
 #'                        confidence_interval = 0.95,
 #'                        intercept = 80,
 #'                        xname = "Time in years", yname = "Concentration",
