@@ -1,3 +1,17 @@
+# AccelStab 2.0.1
+
+This release has a minor bug fix and additional descriptions added.
+
+## Bug fixes
+
+-   `step1_sample_mvt()` Fixed issue when no values at time point zero
+
+-   `potency.rda` File data adjusted slightly
+
+-   `step1_down()` Added to some arguments' description and new print 
+    when any of the k3 draws are below zero.
+
+
 # AccelStab 2.0.0
 
 This is a major release adding a few new functions and fixing a bug.
