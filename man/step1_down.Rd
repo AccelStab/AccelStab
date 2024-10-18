@@ -33,9 +33,9 @@ step1_down(
 
 \item{C}{Celsius variable (numeric or column name) (optional).}
 
-\item{validation}{Validation dummy variable (column name) (optional).}
+\item{validation}{Validation dummy variable, the column must contain only 1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).}
 
-\item{draw}{Number of simulations used to estimate confidence intervals.}
+\item{draw}{Number of simulations used to estimate confidence intervals. When set to NULL the calculus method is used, however this is not recommended.}
 
 \item{parms}{Starting values for the parameters as a list - k1, k2, k3, and c0.}
 
@@ -70,7 +70,7 @@ Fit the one-step Šesták–Berggren kinetic model.
 }
 \details{
 Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-accelerated stability data.
+accelerated stability data from an R dataframe format. Parameters are kept in even when not significant.
 }
 \examples{
 #load antigenicity and potency data.
