@@ -3,7 +3,7 @@
 #' @description Fit the one-step Šesták–Berggren kinetic model.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#'  accelerated stability data.
+#'  accelerated stability data from an R dataframe format. Parameters are kept in even when not significant.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
@@ -11,8 +11,8 @@
 #' @param .time Time variable contained within data (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
-#' @param validation Validation dummy variable (column name) (optional).
-#' @param draw Number of simulations used to estimate confidence intervals.
+#' @param validation Validation dummy variable, the column must contain only 1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).
+#' @param draw Number of simulations used to estimate confidence intervals. When set to NULL the calculus method is used, however this is not recommended.
 #' @param parms Starting values for the parameters as a list - k1, k2, k3, and c0.
 #' @param temp_pred_C Integer or numeric value to predict the response for a
 #'  given temperature (in Celsius).
@@ -356,7 +356,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
-    if (k3 == 0){print("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
+    if (k3 == 0){cat(paste("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE","The model will continue with k3 = 0, so degradation is linear over time"," "," ", sep = "\n"))
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
     c0 = coef(fit)[4]
     SIG = vcov(fit)
@@ -386,6 +386,11 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
       # Multi T bootstrap
       rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
       res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+
+      no_k3_below0 <- sum(rand.coef[,3] < 0)
+      if(no_k3_below0 > 0.5){
+        cat(paste(paste0(no_k3_below0*100/draw, "% of the bootstraps for k3 are below zero, this might have an adverse effect on the confidence interval, particularly if this value exceeds the confidence %."),"We suggest considering option zero_order = TRUE", sep = "\n"))
+      }
 
       CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
@@ -443,7 +448,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
-    if (k3 == 0){print("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
+    if (k3 == 0){cat(paste("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE","The model will continue with k3 = 0, so degradation is linear over time"," ", " ", sep = "\n"))
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
     c0 = coef(fit)[4]
     SIG = vcov(fit)
@@ -472,6 +477,11 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
       # Multi T bootstrap
       rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
       res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+
+      no_k3_below0 <- sum(rand.coef[,3] < 0)
+      if(no_k3_below0 > 0.5){
+        cat(paste(paste0(no_k3_below0*100/draw, "% of the bootstraps for k3 are below zero, this might have an adverse effect on the confidence interval, particularly if this value exceeds the confidence %."),"We suggest considering option zero_order = TRUE", sep = "\n"))
+      }
 
       CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
