@@ -1,4 +1,4 @@
-# AccelStab 2.0.1
+# AccelStab 2.0.2
 
 This release has a minor bug fix and additional descriptions added.
 
