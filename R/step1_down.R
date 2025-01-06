@@ -33,17 +33,19 @@
 #'  \item *prediction* - A data frame containing the predictions with the confidence and prediction intervals.
 #'  \item *user_parameters* - List of users input parameters which is utilised by other
 #'    functions in the package.
+#'  \item *sample_coefficients* - A matrix containing the coefficients sampled during bootstrapping.
 #'    }
 #'
 #' @examples #load antigenicity and potency data.
 #' data(antigenicity)
 #' data(potency)
 #'
-#' #Basic use of the step1.down function with C column defined.
+#' #Basic use of the step1_down function with C column defined.
 #' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", draw = 5000)
 #'
-#' #Basic use of the step1.down function with K column defined.
-#' fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K", draw = 5000)
+#' #Basic use of the step1_down function with K column defined & Validation data segmented out.
+#' fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K",
+#' validation = "validA", draw = 5000)
 #'
 #' #When zero_order = FALSE, the output suggests using zero_order = TRUE for Potency dataset.
 #' fit3 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",
@@ -511,8 +513,18 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     pred$PI1 = PI1b
     pred$PI2 = PI2b}
 
-  results = list(fit, dat_full, pred,user_parameters)
-  names(results) = c("fit", "data", "prediction","user_parameters")
+  if(is.null(draw)){
+    rand.coef = "Calculus method used"
+  }else{
+    if(zero_order){
+      colnames(rand.coef) <- c("k1","k2","c0")
+    }else{
+      colnames(rand.coef) <- c("k1","k2","k3","c0")
+    }
+  }
+
+  results = list(fit, dat_full, pred,user_parameters, rand.coef)
+  names(results) = c("fit", "data", "prediction","user_parameters","sample_coefficients")
   class(results) = "SB"
   return(results)
 

@@ -2,6 +2,7 @@
 
 export(excursion)
 export(step1_down)
+export(step1_down_basic)
 export(step1_down_rmse)
 export(step1_plot_CI)
 export(step1_plot_PI)

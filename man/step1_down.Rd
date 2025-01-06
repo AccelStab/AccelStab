@@ -63,6 +63,7 @@ An SB class object, a list including the following elements:
 \item \emph{prediction} - A data frame containing the predictions with the confidence and prediction intervals.
 \item \emph{user_parameters} - List of users input parameters which is utilised by other
 functions in the package.
+\item \emph{sample_coefficients} - A matrix containing the coefficients sampled during bootstrapping.
 }
 }
 \description{
@@ -77,11 +78,12 @@ accelerated stability data from an R dataframe format. Parameters are kept in ev
 data(antigenicity)
 data(potency)
 
-#Basic use of the step1.down function with C column defined.
+#Basic use of the step1_down function with C column defined.
 fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", draw = 5000)
 
-#Basic use of the step1.down function with K column defined.
-fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K", draw = 5000)
+#Basic use of the step1_down function with K column defined & Validation data segmented out.
+fit2 <- step1_down(data = antigenicity, y = "conc", .time = "time", K = "K",
+validation = "validA", draw = 5000)
 
 #When zero_order = FALSE, the output suggests using zero_order = TRUE for Potency dataset.
 fit3 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",

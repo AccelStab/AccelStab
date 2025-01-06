@@ -4,12 +4,14 @@
 \alias{step1_plot_diagnostic}
 \title{Create Diagnostic Plots}
 \usage{
-step1_plot_diagnostic(step1_down_object, bins = 7)
+step1_plot_diagnostic(step1_down_object, bins = 7, residuals = "classic")
 }
 \arguments{
 \item{step1_down_object}{The fit object from the step1_down function (required).}
 
 \item{bins}{The number of bins in the Histogram plot (default 7).}
+
+\item{residuals}{The type of residuals to plot classic/studentized (default classic).}
 }
 \value{
 A list containing the four ggplot2 plots.
@@ -20,6 +22,7 @@ Generate residual diagnostic plots from a step1_down fit.
 \details{
 Use the fit object obtained from the step1_down function to plot the
 residual diagnostic plots, assess the quality of fit and search for anomalies.
+Change the type of Residuals assessed.
 Plots created are: Residuals Histogram, Observed Vs Predicted results, Residuals
 Vs Predicted results and QQplot of Residuals.
 }

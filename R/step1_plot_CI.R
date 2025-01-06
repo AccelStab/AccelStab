@@ -23,7 +23,7 @@
 #'
 #' #run step1.down fit
 #' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
-#'  C = "Celsius", max_time_pred = 3, confidence_interval = 0.9)
+#'  C = "Celsius", max_time_pred = 3, confidence_interval = 0.9, validation = "validA")
 #'
 #' #plot raw data with prediction curves and confidence intervals.
 #' step1_plot_CI(step1_down_object = fit1, xlim = NULL, ylim = NULL,

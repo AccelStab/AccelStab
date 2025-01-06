@@ -1,19 +1,21 @@
 #' Antigenicity Accelerated Stability Data
 #'
 #' An example dataset containing antigenicity concentration data at different
-#' temperatures over a period of up to 147 days.
+#' temperatures over a period of up to 407 days. Two points over 180 days are
+#' to be used for validation instead of fitting.
 #'
 #' @docType data
 #'
 #' @usage data(antigenicity)
 #'
-#' @format An object of class \code{"data.frame"} with 50 rows and 5 variables
+#' @format An object of class \code{"data.frame"} with 56 rows and 6 variables
 #' \describe{
 #'  \item{time}{Number of days in years for which the datapoints are gathered.}
-#'  \item{conc}{The concentration at a time.}
-#'  \item{K}{The temperature in Kelvin.}
 #'  \item{Celsius}{The temperature in celsius.}
-#'  \item{days}{Number of days for which the datapoints are gathered.}
+#'  \item{K}{The temperature in Kelvin.}
+#'  \item{conc}{The concentration at a time.}
+#'  \item{N.days}{Number of days for which the datapoints are gathered.}
+#'  \item{validA}{Whether the data point is to be used for validation or fitting.}
 #'
 #' }
 #'

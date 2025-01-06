@@ -4,11 +4,13 @@
 #'
 #' @details Use the fit object obtained from the step1_down function to plot the
 #' residual diagnostic plots, assess the quality of fit and search for anomalies.
+#' Change the type of Residuals assessed.
 #' Plots created are: Residuals Histogram, Observed Vs Predicted results, Residuals
 #'  Vs Predicted results and QQplot of Residuals.
 #'
 #' @param step1_down_object The fit object from the step1_down function (required).
 #' @param bins The number of bins in the Histogram plot (default 7).
+#' @param residuals The type of residuals to plot classic/studentized/standardized (default classic).
 #'
 #' @return A list containing the four ggplot2 plots.
 #'
@@ -28,10 +30,11 @@
 #'
 #' @export step1_plot_diagnostic
 
-step1_plot_diagnostic <- function(step1_down_object, bins = 7)
+step1_plot_diagnostic <- function(step1_down_object, bins = 7, residuals = "classic")
 {
   if (is.null(step1_down_object))
     stop("First, run the model")
+
   dat = step1_down_object$data
 
   mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element_rect(fill = "white"),
@@ -42,13 +45,86 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7)
                             legend.title = element_text(size = 13))
 
   validation = step1_down_object$user_parameters$validation
+
   if(!is.null(validation)){
     dat <- dat[dat$validation == "Fit",]
   }
 
   dat$residuals <- summary(step1_down_object$fit)$residuals
 
+  #dat$y = dat[, step1_down_object$user_parameters$y]
+
   dat$predicted <- dat$y - dat$residuals
+
+  title_addition = ""
+
+  if (residuals == "studentized") {
+    # Initialize a vector to store studentized residuals
+    studentized_residuals <- numeric(nrow(dat))
+
+    # Loop through each data point
+    for (i in seq_len(nrow(dat))) {
+      # Exclude the i-th data point
+      dat_excluded <- dat[-i, ]
+
+      # Re-fit the model without the i-th data point
+      sink(tempfile())
+      fit_excluded <- step1_down_basic(
+        data = dat_excluded,
+        y = "y",
+        .time = "time",
+        #C = "Celsius",
+        K = "K",
+        parms = step1_down_object$user_parameters$parms,
+        reparameterisation = step1_down_object$user_parameters$reparameterisation,
+        zero_order = step1_down_object$user_parameters$zero_order
+      )
+      sink()
+
+      # find the predicted value when fitted without the point
+      k1 = coef(fit_excluded)["k1"]
+      k2 = coef(fit_excluded)["k2"]
+      k3 = coef(fit_excluded)["k3"]
+      c0 = coef(fit_excluded)["c0"]
+      if (step1_down_object$user_parameters$reparameterisation == TRUE){
+        Kref = mean(dat_excluded$K)
+        predicted_i = c0 - c0 * (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2/dat$K[i] + k2/Kref)))^(1/(1 - k3)))
+
+        }else{
+          predicted_i = c0 - c0 * (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2 / dat$K[i])))^(1/(1-k3)))
+      }
+
+      # Calculate the residual for the excluded data point
+      residual_i <- dat$y[i] - predicted_i
+
+      # Calculate the standard error of the residual
+      se_residual <- sqrt(mean((summary(fit_excluded)$residuals)^2))
+
+      # Calculate the studentized residual
+      studentized_residuals[i] <- residual_i / se_residual
+      }
+
+    # Store the studentized residuals in the data frame
+    dat$residuals <- studentized_residuals
+
+    title_addition <- "Studentized "
+  }else if(residuals == "standardized"){
+    # Extract the fitted values and residuals from the model
+    ordinary_residuals <- dat$residuals
+
+    # Calculate the standard error of the residuals
+    sigma_squared <- mean(ordinary_residuals^2)
+    se_residuals <- sqrt(sigma_squared)
+
+    # Calculate the standardized residuals
+    standardized_residuals <- ordinary_residuals / se_residuals
+
+    # Store the standardized residuals in the data frame
+    dat$residuals <- standardized_residuals
+
+    title_addition <- "Standardized "
+
+  }
 
   # Histogram plot
 
@@ -61,7 +137,7 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7)
                   xlim = c(min(dat$residuals), max(dat$residuals)),
                   col = "turquoise",
                   linewidth = 1,
-                  alpha = 0.6) + ggtitle ("Residuals Histogram") + xlab("Residuals") + ylab("Density") +
+                  alpha = 0.6) + ggtitle (paste0(title_addition,"Residuals Histogram")) + xlab(paste0(title_addition,"Residuals")) + ylab("Density") +
     mytheme
 
 
@@ -75,9 +151,9 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7)
 
   # residuals vs predicted
   res_pred = ggplot() + geom_point(data = dat, mapping = aes(x = predicted, y = residuals, colour = Celsius)) +
-    labs( x = "Predicted response", y = "Residuals") +
+    labs( x = "Predicted response", y = paste0(title_addition,"Residuals")) +
     geom_hline(yintercept=0, linetype="solid", color = "black")+
-    ggtitle ("Residuals Vs Predicted") +
+    ggtitle (paste0(title_addition,"Residuals Vs Predicted")) +
     mytheme
 
   # QQplot
