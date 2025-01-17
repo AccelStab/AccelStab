@@ -11,7 +11,7 @@ step1_plot_diagnostic(step1_down_object, bins = 7, residuals = "classic")
 
 \item{bins}{The number of bins in the Histogram plot (default 7).}
 
-\item{residuals}{The type of residuals to plot classic/studentized (default classic).}
+\item{residuals}{The type of residuals to plot classic/studentized/standardized (default classic).}
 }
 \value{
 A list containing the four ggplot2 plots.

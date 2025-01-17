@@ -1,3 +1,22 @@
+# AccelStab 2.1.0
+
+This is a major release adding new functionality, adjusting the data sets and documentation.
+
+## New features
+
+-   `step1_down_basic()` This new function allows for rapid testing of the fit without 
+    all of the features.
+
+-   `antigenicity` Changed example data and added a validation column.
+
+-   `step1_down()` Adjusted the help page and added validation options to the examples.
+    The function will now also return sampled parameters, reducing the need for the 
+    step1_sample_mvt function.
+
+-   `step1_plot_diagnostic()` Added argument to use either classic, standardized or 
+    studentized residuals.
+
+
 # AccelStab 2.0.2
 
 This release has a minor bug fix and additional descriptions added.
