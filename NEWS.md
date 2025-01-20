@@ -1,3 +1,8 @@
+# AccelStab 2.1.1
+
+This is a minor release updating authors and email addresses
+
+
 # AccelStab 2.1.0
 
 This is a major release adding new functionality, adjusting the data sets and documentation.
