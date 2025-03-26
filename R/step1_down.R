@@ -3,7 +3,7 @@
 #' @description Fit the one-step Šesták–Berggren kinetic model.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#'  accelerated stability data from an R dataframe format. Parameters are kept in even when not significant.
+#'  accelerated stability data from an R dataframe format. Parameters are kept in even when not significant. Predictions, including confidence and prediction intervals, are also computed. Further arguments relating to model fitting, such as parameter lower bounds, may be passed.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
@@ -24,7 +24,7 @@
 #' @param reparameterisation Use alternative parameterisation of the one-step
 #'  model which aims to reduce correlation between k1 and k2.
 #' @param zero_order Set kinetic order, k3, to zero (straight lines).
-
+#' @param ... Further arguments to passed to minpack.lm. 
 #'
 #' @return An SB class object, a list including the following elements:
 #' \itemize{
@@ -54,6 +54,10 @@
 #' #reparameterisation is TRUE.
 #' fit4 <- step1_down(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
 #'   reparameterisation = TRUE, draw = 5000)
+#'
+#' #Use a custom lower bound for k1 (default is 0).
+#' fit5 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",
+#'   reparameterisation = TRUE, zero_order = TRUE, draw = 5000, lower = c(-Inf, 0, 0))
 #'
 #' @importFrom stats vcov coef runif confint rnorm quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
