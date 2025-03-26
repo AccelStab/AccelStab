@@ -26,7 +26,7 @@
 #' step1_plot_diagnostic(fit1)
 #'
 #' @import ggplot2
-#' @importFrom stats dnorm sd
+#' @importFrom stats dnorm sd qqnorm
 #'
 #' @export step1_plot_diagnostic
 
@@ -157,8 +157,9 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7, residuals = "clas
     mytheme
 
   # QQplot
-  qqplot <- ggplot(as.data.frame(dat), aes(sample = residuals)) +
-    stat_qq(aes(colour = Celsius)) + stat_qq_line() +
+  qqplot <- ggplot() +
+    geom_point(data = cbind(Celsius = dat$Celsius, as.data.frame(qqnorm(dat$residuals, plot.it = FALSE))), aes(x = x, y = y, colour = Celsius)) +
+    stat_qq_line(data = dat, aes(sample = residuals)) +
     ggtitle ("Q-Q Plot") + xlab("Theoretical Quantiles") + ylab("Sample Quantiles")+
     mytheme
 
@@ -168,6 +169,3 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7, residuals = "clas
 }
 
 globalVariables(c('residuals','density','predicted'))
-
-
-
