@@ -19,6 +19,7 @@
 #' @param reparameterisation Use alternative parameterisation of the one-step
 #'  model which aims to reduce correlation between k1 and k2.
 #' @param zero_order Set kinetic order, k3, to zero (straight lines).
+#' @param ... Further arguments to passed to minpack.lm. 
 #'
 #' @return The fit object
 #'
