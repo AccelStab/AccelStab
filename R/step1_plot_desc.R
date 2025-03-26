@@ -71,8 +71,8 @@ step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL, validation = NU
   plot <- ggplot2::ggplot(dat, aes(time, y, colour = Celsius)) + ggplot2::geom_point(mapping = aes(shape = validation)) +
    ggplot2::stat_summary(fun = mean, geom = "line") +
    labs( x = xname, y = yname) +
-   {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
-   {if(!is.null(ylim))scale_y_continuous(limits = ylim)} +
+   {if(!is.null(xlim))coord_cartesian(xlim = xlim)} +
+   {if(!is.null(ylim))coord_cartesian(ylim = ylim)} +
    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    mytheme +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
