@@ -63,8 +63,8 @@ step1_plot_PI <- function (step1_down_object, xname = NULL, yname = NULL,
 
   plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation))  +
     labs( x = xname, y = yname) +
-    {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
-    {if(!is.null(ylim))scale_y_continuous(limits = ylim)} +
+   {if(!is.null(xlim))coord_cartesian(xlim = xlim)} +
+   {if(!is.null(ylim))coord_cartesian(ylim = ylim)} +
     mytheme  +
     geom_line(data=pred, mapping=aes(x= time, y = Response, colour = Celsius, linetype = "Prediction")) +
     geom_line(data=pred, mapping=aes(x= time, y = PI1, colour = Celsius, linetype = prediction_i)) +
