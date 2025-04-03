@@ -1,6 +1,6 @@
 ---
 title: "Accelerated Stability Analysis using AccelStab in R"
-author: "Bernard G Francq, Ben Wells, Alex Ball"
+author: "Bernard G Francq, Ben Wells, Daniel Williams, Alex Ball"
 date: "2025-03-27"
 output: rmarkdown::html_vignette
 vignette: >
