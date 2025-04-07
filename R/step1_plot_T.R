@@ -24,11 +24,11 @@
 #' fit1 <- step1_down(data = potency, y = "Potency", .time = "Time",
 #'  C = "Celsius", zero_order = TRUE)
 #'
-#' #plot raw data with prediction curves with focus on temperature in dataset.
+#' #plot raw data with prediction curves with focus on temperature in dataset; also limit y-axis to values between 0 and 12.
 #' step1_plot_T(fit1, focus_T = 5,ribbon = TRUE, xlim = NULL, ylim = c(0,12),
 #'  xname = "Time (Month)", yname = "Potency")
 #'
-#' #plot raw data with prediction curves with focus on temperature not in dataset.
+#' #plot raw data with prediction curves with focus on temperature not in dataset; also limit y-axis to values between 0 and 12.
 #' step1_plot_T(fit1, focus_T = -10,ribbon = TRUE, xlim = NULL, ylim = c(0,12),
 #'  xname = "Time (Months)", yname = "Potency")
 #'
