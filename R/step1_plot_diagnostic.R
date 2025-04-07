@@ -5,7 +5,7 @@
 #' @details Use the fit object obtained from the step1_down function to plot the
 #' residual diagnostic plots, assess the quality of fit and search for anomalies.
 #' Change the type of Residuals assessed.
-#' Plots created are: Residuals Histogram, QQ Plot, Observed Vs Predicted results, Residuals
+#' Plots created are: Residuals Histogram, QQ Plot of Residuals, Observed Vs Predicted results, Residuals
 #'  Vs Predicted results and Residuals By Time.
 #'
 #' @param step1_down_object The fit object from the step1_down function (required).
