@@ -3,7 +3,10 @@
 #' @description Fit the one-step Šesták–Berggren kinetic model.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#'  accelerated stability data from an R dataframe format. Parameters are kept in even when not significant. Predictions, including confidence and prediction intervals, are also computed. Further arguments relating to model fitting, such as parameter lower bounds, may be passed.
+#'  accelerated stability data from an R dataframe format. Parameters are kept
+#'  in even when not significant. Predictions, including confidence and prediction
+#'  intervals, are also computed. Further arguments relating to model fitting,
+#'  such as parameter lower bounds, may be passed.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
@@ -11,8 +14,10 @@
 #' @param .time Time variable contained within data (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
-#' @param validation Validation dummy variable, the column must contain only 1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).
-#' @param draw Number of simulations used to estimate confidence intervals. When set to NULL the calculus method is used, however this is not recommended.
+#' @param validation Validation dummy variable, the column must contain only
+#'  1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).
+#' @param draw Number of simulations used to estimate confidence intervals.
+#'  When set to NULL the calculus method is used, however this is not recommended.
 #' @param parms Starting values for the parameters as a list - k1, k2, k3, and c0.
 #' @param temp_pred_C Integer or numeric value to predict the response for a
 #'  given temperature (in Celsius).
@@ -24,7 +29,7 @@
 #' @param reparameterisation Use alternative parameterisation of the one-step
 #'  model which aims to reduce correlation between k1 and k2.
 #' @param zero_order Set kinetic order, k3, to zero (straight lines).
-#' @param ... Further arguments to passed to minpack.lm. 
+#' @param ... Further arguments to passed to minpack.lm.
 #'
 #' @return An SB class object, a list including the following elements:
 #' \itemize{
@@ -72,7 +77,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
 
   if (is.null(K) & is.null(C))
     stop("Select the temperature variable in Kelvin or Celsius")
-  
+
   if (!is.null(parms) & !is.list(parms))
     stop("The starting values for parameters must be a list, or keep as NULL")
 
@@ -100,12 +105,12 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
 
   ## Temperature: only C or only K is provided
   if (!is.null(C) & is.null(K)) {             ##
-   K = 'K'                                  ##  
+   K = 'K'                                  ##
    data[, K] = data[, C] + 273.15  }        ##
   if (!is.null(K) & is.null(C)) {             ##
-    C = 'C'                                 ## 
+    C = 'C'                                 ##
     data[, C] = data[, K] - 273.15 }        ##
-  
+
   data <- data[complete.cases(data[, c(C,K,y,.time)]), ]
 
   dat = data
@@ -153,10 +158,10 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
   }
 
 ## Model type 1 - reparameterisation and k3 = 0
-  if(reparameterisation & zero_order){ 
+  if(reparameterisation & zero_order){
 
 ## Print a message informing lower bounds = 0 may not be suitable with the reparamerised version
-cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n")  
+cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n")
 
   MyFctNL = function(parms) { # Make function
       k1 = parms$k1
@@ -176,7 +181,7 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
      minpack_args$par =  parms                          ##
     if (!"lower" %in% names(minpack_args)) 	{	##
     minpack_args$lower =  rep(0, length(parms))   }     ##
- 
+
 	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
 	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
 
@@ -187,17 +192,17 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
         suppressWarnings(rm(fit))
 
         parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1, 1000, 20000), c0 = c0_initial)
-        
-minpack_args$par = parms 
+
+minpack_args$par = parms
 
 if (!"lower" %in% names(minpack_args)) 	{	##
-	minpack_args$lower =  rep(0, length( parms ))   }     ##     
+	minpack_args$lower =  rep(0, length( parms ))   }     ##
 
 	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
 	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
 
   fit = suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
-     
+
    fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
         },
@@ -289,11 +294,11 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         suppressWarnings(rm(fit))
 
         parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1, 1000, 20000), c0 = c0_initial)
-       
+
   minpack_args$par = parms ##
 
 if (!"lower" %in% names(minpack_args)) 	{	##
-	    minpack_args$lower =  rep(0, length( parms ))   }   ##     
+	    minpack_args$lower =  rep(0, length( parms ))   }   ##
 
 	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
   stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
@@ -316,7 +321,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
       }
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
-    
+
 # Predict
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
@@ -359,10 +364,10 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     }
 
 ## Model type 3 - reparameterisation and k3 is not zero
-  }else if(reparameterisation & !zero_order){ 
+  }else if(reparameterisation & !zero_order){
 
   ## Print a message informing lower bounds = 0 may not be suitable with the reparamerised version
-  cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n") 
+  cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n")
 
    MyFctNL = function(parms) {
       k1 = parms$k1
@@ -377,7 +382,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
 
   if (!"fn" %in% names(minpack_args)) 	{	##
     minpack_args$fn =  MyFctNL    }             ##
-    
+
   if (!is.null(parms)) { # Fit the model
         minpack_args$par =  parms               ##
   if (!"lower" %in% names(minpack_args)) 	{	##
@@ -394,10 +399,10 @@ if (!"lower" %in% names(minpack_args)) 	{	##
 
         parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1, 1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
 
-  minpack_args$par = parms 
+  minpack_args$par = parms
 
   if (!"lower" %in% names(minpack_args)) 	{	##
-	    minpack_args$lower =  rep(0, length( parms ))   }     ##      
+	    minpack_args$lower =  rep(0, length( parms ))   }     ##
 
 	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
   stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
@@ -471,7 +476,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
 
     }
 
-## Model type 4 - no reparameterisation and k3 is not 0    
+## Model type 4 - no reparameterisation and k3 is not 0
   }else if(!reparameterisation & !zero_order){
     MyFctNL = function(parms) {
       k1 = parms$k1
@@ -504,11 +509,11 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         suppressWarnings(rm(fit))
 
         parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1, 1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
- 
-  minpack_args$par = parms 
+
+  minpack_args$par = parms
 
   if (!"lower" %in% names(minpack_args)) 	{	##
-	    minpack_args$lower =  rep(0, length( parms ))   } ##      
+	    minpack_args$lower =  rep(0, length( parms ))   } ##
 
 	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
   stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
@@ -531,7 +536,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
       }
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
-    
+
     # Predict
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
