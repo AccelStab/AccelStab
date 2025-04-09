@@ -79,4 +79,3 @@ step1_plot_CI <- function (step1_down_object, xname = NULL, yname = NULL,
 }
 
 globalVariables(c('time','y','Celsius','Response','CI1','CI2'))
-
