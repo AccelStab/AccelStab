@@ -12,7 +12,7 @@
 #' @param bins The number of bins in the Histogram plot (default 7).
 #' @param residuals The type of residuals to plot classic/studentized/standardized (default classic).
 #'
-#' @return A list containing the four ggplot2 plots.
+#' @return A list containing the five ggplot2 plots.
 #'
 #' @examples
 #' #load antigenicity data
