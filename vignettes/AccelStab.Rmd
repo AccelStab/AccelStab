@@ -1,6 +1,6 @@
 ---
 title: "Accelerated Stability Analysis using AccelStab in R"
-author: "Bernard G Francq, Ben Wells, Alex Ball"
+author: "Bernard G Francq, Ben Wells, Daniel Williams, Alex Ball"
 date: "2025-03-27"
 output: rmarkdown::html_vignette
 vignette: >
@@ -254,7 +254,7 @@ summary(res$fit)
 confint(res$fit)
 ```
 
-Built-in visualisations of residuals are produced as a list of four plots, the first of which is a histogram.
+Built-in visualisations of residuals are produced as a list of five plots, the first of which is a histogram.
 
 ```{r}
 step1_plot_diagnostic(res)[1]
