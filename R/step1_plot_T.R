@@ -1,52 +1,79 @@
-#' @title  Plot Prediction Intervals
+#' @title  Focus on Temperature
 #'
-#' @description Plot the stability data and visualise the predictions with prediction intervals.
+#' @description Plot the stability data and visualise the predictions with focus on
+#'  one temperature.
 #'
-#' @details Use the fit object obtained from the step1.down function to plot the
-#'  stability data and visualise the predictions with prediction intervals applied.
-#'  There is an option to view the prediction intervals as a ribbon. The
-#'  prediction interval value is chosen in the step1.down function.
+#' @details Plot the stability data and visualise the predictions focusing on one
+#'  chosen temperature with confidence and prediction intervals.
 #'
 #' @param step1_down_object The fit object from the step1.down function (required).
+#' @param focus_T Selected temperature to highlight on the plot.
 #' @param xname Label for the x-axis (optional).
 #' @param yname Label for the y-axis (optional).
-#' @param xlim x-axis limits (optional).
-#' @param ylim y-axis limits (optional).
-#' @param ribbon Add shade to prediction intervals (optional).
+#' @param xlim the x-axis limits (optional).
+#' @param ylim the y-axis limits (optional).
+#' @param ribbon adds shade to confidence and prediction intervals (optional).
 #'
-#' @return Plot of stability data with prediction curves and prediction intervals.
+#' @return ggplot2 object with focus on chosen temperature.
 #'
 #' @examples
-#' #Load antigenicity data
-#' data(antigenicity)
+#' #Load potency data
+#' data(potency)
 #'
-#' #Run step1.down fit
-#' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
-#'  C = "Celsius", max_time_pred = 3)
+#' #Run step1_down fit
+#' fit1 <- step1_down(data = potency, y = "Potency", .time = "Time",
+#'  C = "Celsius", zero_order = TRUE)
 #'
-#' #Plot raw data with prediction curves and prediction intervals.
-#' step1_plot_PI(step1_down_object = fit1, xlim = NULL, ylim = NULL,
-#'  xname = "Time (Years)", yname = "Concentration", ribbon = TRUE)
+#' #Plot raw data with prediction curves with focus on temperature in dataset; also limit x-axis to values between 0 and 10 and limit y-axis to values between 0 and 12. 
+#' step1_plot_T(fit1, focus_T = 5,ribbon = TRUE, xlim = c(0,10), ylim = c(0,12),
+#'  xname = "Time (Month)", yname = "Potency")
 #'
-#' #Plot raw data with prediction curves and confidence intervals; also limit x-axis to values between 0 and 1.5 and limit y-axis to values between 0 and 105.
-#' step1_plot_PI(step1_down_object = fit1, xlim = c(0,1.5), ylim = (0,105),
-#'  xname = "Time (Years)", yname = "Concentration", ribbon = TRUE)
+#' #Plot raw data with prediction curves with focus on temperature not in dataset; also limit x-axis to values between 0 and 10 and limit y-axis to values between 0 and 12. 
+#' step1_plot_T(fit1, focus_T = -10,ribbon = TRUE, xlim = c(0,10), ylim = c(0,12),
+#'  xname = "Time (Months)", yname = "Potency")
 #'
 #' @import ggplot2
+#' @import scales
 #'
-#' @export step1_plot_PI
+#' @export step1_plot_T
 
-step1_plot_PI <- function (step1_down_object, xname = NULL, yname = NULL,
-                           xlim = NULL, ylim = NULL, ribbon = FALSE)
+step1_plot_T <- function (step1_down_object, focus_T = NULL, xname = NULL, yname = NULL,
+                       xlim = NULL, ylim = NULL, ribbon = FALSE)
 {
   if (is.null(step1_down_object))
     stop("First, run the model")
+  if (is.null(focus_T))
+    stop("You must select a temperature to focus on")
   if (is.null(xname))
     xname = "Time"
   if (is.null(yname))
     yname = "Response Variable"
-  dat = step1_down_object$data
-  pred = step1_down_object$prediction
+
+  if(!(focus_T %in% step1_down_object$prediction$Celsius)){
+    step1_down_object_temp <- step1_down(
+      data = step1_down_object$user_parameters$data,
+      y = step1_down_object$user_parameters$y,
+      .time = step1_down_object$user_parameters$.time,
+      K = step1_down_object$user_parameters$K,
+      C = step1_down_object$user_parameters$C,
+      validation = step1_down_object$user_parameters$validation,
+      draw = step1_down_object$user_parameters$draw,
+      parms = step1_down_object$user_parameters$parms,
+      temp_pred_C = c(step1_down_object$user_parameters$temp_pred_C,focus_T),
+      max_time_pred = step1_down_object$user_parameters$max_time_pred,
+      confidence_interval = step1_down_object$user_parameters$confidence_interval,
+      by = step1_down_object$user_parameters$by,
+      reparameterisation = step1_down_object$user_parameters$reparameterisation,
+      zero_order = step1_down_object$user_parameters$zero_order
+      )
+    dat = step1_down_object_temp$data
+    pred = step1_down_object_temp$prediction
+    confidence_interval = step1_down_object_temp$user_parameters$confidence_interval
+  }else{
+    dat = step1_down_object$data
+    pred = step1_down_object$prediction
+    confidence_interval = step1_down_object$user_parameters$confidence_interval
+  }
 
   mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element_rect(fill = "white"),
                             legend.key = element_rect(fill = "white"), legend.key.width = unit(2,"cm"),
@@ -61,23 +88,36 @@ step1_plot_PI <- function (step1_down_object, xname = NULL, yname = NULL,
     names(shape_types) <- c("Fit", "Validation")
   }
 
-  prediction_i <- paste0(step1_down_object$user_parameters$confidence_interval * 100," % PI")
-  line_types <- if(ribbon){c("solid", "dotted")}else{c("dotted", "solid")}
-  names(line_types) <- c("Prediction",prediction_i)
+  xx = pred$Celsius == focus_T
 
-  plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation))  +
-    labs( x = xname, y = yname) +
+  confidence_i <- paste0(confidence_interval * 100," % CI")
+  prediction_i <- paste0(confidence_interval * 100," % PI")
+
+  lines_t <- c("solid","dotted","longdash")
+  names(lines_t) <- c("Prediction",confidence_i,prediction_i)
+
+  colour_t <- scales::hue_pal()(length(unique(pred$Celsius)))
+  names(colour_t) <- as.character(unique(pred$Celsius))
+
+  plot = ggplot() +
+   labs( x = xname, y = yname) +
    {if(!is.null(ylim)& is.null(xlim))coord_cartesian(ylim = ylim)} +
    {if(is.null(ylim)& !is.null(xlim))coord_cartesian(xlim = xlim)} +
    {if(!is.null(xlim) & !is.null(ylim))coord_cartesian(xlim = xlim, ylim = ylim)} +
-    mytheme  +
-    geom_line(data=pred, mapping=aes(x= time, y = Response, colour = Celsius, linetype = "Prediction")) +
-    geom_line(data=pred, mapping=aes(x= time, y = PI1, colour = Celsius, linetype = prediction_i)) +
-    geom_line(data=pred, mapping=aes(x= time, y = PI2, colour = Celsius, linetype = prediction_i)) +
-    {if(ribbon)geom_ribbon(data=pred, aes(x = time, ymin=PI1, ymax=PI2, fill = Celsius), alpha=0.08, show.legend = FALSE)} +
-    scale_linetype_manual(name = NULL, values = line_types) +
-    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
-    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
+   mytheme  +
+   geom_line(data=pred, mapping=aes(x= time, y = Response, colour = Celsius, linetype = "Prediction")) +
+   geom_line(data=pred[xx,], mapping=aes(x= time, y = CI1, colour = Celsius, linetype = confidence_i)) +
+   geom_line(data=pred[xx,], mapping=aes(x= time, y = CI2, colour = Celsius, linetype = confidence_i)) +
+  {if(ribbon)geom_ribbon(data=pred[xx,], aes(x = time, ymin=PI1, ymax=PI2, fill = Celsius), alpha=0.08, show.legend = FALSE)} +
+  {if(ribbon)geom_ribbon(data=pred[xx,], aes(x = time, ymin=CI1, ymax=CI2, fill= Celsius), alpha=0.13, show.legend = FALSE)} +
+   geom_line(data=pred[xx,], mapping=aes(x= time, y = PI1, colour = Celsius, linetype = prediction_i)) +
+   geom_line(data=pred[xx,], mapping=aes(x= time, y = PI2, colour = Celsius, linetype = prediction_i)) +
+   geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation)) +
+   scale_linetype_manual(name = NULL, values = lines_t) +
+   scale_colour_manual(name = "Celsius", values = colour_t) +
+   scale_fill_manual(name = NULL, values = colour_t) +
+   {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
+   theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
 
   return(plot)
 }
