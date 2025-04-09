@@ -43,6 +43,10 @@
 #' fit4 <- step1_down_basic(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
 #'   reparameterisation = TRUE)
 #'
+#' #Use a custom lower bound for k1 (default is 0).
+#' fit5 <- step1_down_basic(data = potency, y = "Potency", .time = "Time", C = "Celsius",
+#'   reparameterisation = TRUE, zero_order = TRUE, lower = c(-Inf, 0, 0))
+#'
 #' @importFrom stats coef vcov runif complete.cases
 #' @importFrom minpack.lm nls.lm
 #'
