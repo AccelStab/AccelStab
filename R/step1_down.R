@@ -3,10 +3,14 @@
 #' @description Fit the one-step Šesták–Berggren kinetic model.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#'  accelerated stability data from an R dataframe format. Parameters are kept
-#'  in even when not significant. Predictions, including confidence and prediction
-#'  intervals, are also computed. Further arguments relating to model fitting,
-#'  such as parameter lower bounds, may be passed.
+#' accelerated stability data that has been stored in an R data frame. Additionally,
+#' predictions of the mean at each tested temperature are returned, including associated
+#' confidence and prediction intervals, which can be subsequently visualised with
+#' step1_plot_pred(), step1_plot_CI(), step1_plot_PI() and step1_plot_T(). Kinetic
+#' parameters (k1, k2 and, if used, k3) are retained in the model even if one or more of
+#' these parameters turn out to be non-significant. Further arguments relating to
+#' model fitting, such as setting lower bounds for one or more model parameters,
+#' may be passed.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
