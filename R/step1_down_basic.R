@@ -4,10 +4,11 @@
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
 #' accelerated stability data that has been stored in an R data frame. Only the model
-#' fit object is returned, allowing for more rapid testing than step1_down(). Kinetic
-#' parameters (k1, k2 and, if used, k3) are retained in the model even if one or more of
-#' these parameters turn out to be non-significant. Further arguments relating to model
-#' fitting, such as setting lower bounds for one or more model parameters, may be passed.
+#' fit object is returned and a summary of the model fit is printed in the console, allowing
+#' for more rapid testing than step1_down(). Kinetic parameters (k1, k2 and, if used, k3) are
+#' retained in the model even if one or more of these parameters turn out to be non-significant.
+#' Further arguments relating to model fitting, such as setting lower bounds for one or more model
+#' parameters, may be passed.
 #'
 #' @param data Dataframe containing accelerated stability data (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
