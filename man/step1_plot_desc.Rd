@@ -49,12 +49,12 @@ Plot the raw accelerated stability data by selecting the columns -
 response, time and temperature.
 }
 \examples{
-#load example datasets
+#Load example datasets
 data(antigenicity)
 data(potency)
 
 step1_plot_desc(data=antigenicity, y="conc", .time="time", C = "Celsius")
 
-step1_plot_desc(data=potency, y="Potency", .time="Time", C = "Celsius")
+step1_plot_desc(data=potency, y="Potency", .time="Time", C = "Celsius", xlim=c(0,10), ylim=c(0,12))
 
 }

@@ -28,7 +28,8 @@
 #' step1_plot_PI(step1_down_object = fit1, xlim = NULL, ylim = NULL,
 #'  xname = "Time (Years)", yname = "Concentration", ribbon = TRUE)
 #'
-#' #Plot raw data with prediction curves and confidence intervals; also limit x-axis to values between 0 and 1.5 and limit y-axis to values between 0 and 105.
+#' #Plot raw data with prediction curves and confidence intervals.
+#' #Also limit x-axis to values between 0 and 1.5 and limit y-axis to values between 0 and 105.
 #' step1_plot_PI(step1_down_object = fit1, xlim = c(0,1.5), ylim = c(0,105),
 #'  xname = "Time (Years)", yname = "Concentration", ribbon = TRUE)
 #'

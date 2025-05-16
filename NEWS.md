@@ -1,7 +1,35 @@
+# AccelStab 2.2.0
+
+This is a minor release which adds extra functionality to existing functions plus
+a vignette has been added that gives more background to the package.
+
+## Enhancements
+
+### `step1_plot_diagnostic()`
+- Includes **validation data** in observed vs predicted and residuals vs predicted scatter plots, if provided.
+- Adds a new plot: **residuals vs time**, color-coded by temperature, and includes validation data points when present.
+- Vignette updated to reflect that the function now generates **five plots** (previously four).
+
+### Plotting Functions (`step1_plot_CI()`, `step1_plot_desc()`, `step1_plot_PI()`, `step1_plot_pred()`, `step1_plot_T()`)
+- `xlim` and `ylim` now **truncate the visible plot area only**, without removing data used in the plot.
+
+## Bug Fixes
+
+### `step1_plot_diagnostic()`
+- Fixed **QQ plot** to show quantiles for all data, rather than temperature-specific quantiles.
+
+### `step1_down()` and `step1_down_basic()`
+- Added `...` to allow passing optional arguments to `minpack.lm`.
+- When `reparam = TRUE`, now prints a message: **default lower bounds are 0**, but custom bounds may be specified.
+- Fixed issue with **Kelvin temperature** inputs.
+
+## Documentation
+
+- Updated **function descriptions** across all relevant functions for clarity and completeness.
+
 # AccelStab 2.1.1
 
 This is a minor release updating authors and email addresses
-
 
 # AccelStab 2.1.0
 
