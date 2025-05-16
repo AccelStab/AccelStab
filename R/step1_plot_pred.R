@@ -14,13 +14,13 @@
 #' @return Plot of accelerated stability data with prediction curves.
 #'
 #' @examples
-#' #load antigenicity data
+#' #Load antigenicity data
 #' data(antigenicity)
 #'
 #' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
 #'  C = "Celsius", max_time_pred = 3)
 #'
-#' step1_plot_pred(step1_down_object = fit1, xlim = NULL, ylim = NULL,
+#' step1_plot_pred(step1_down_object = fit1, xlim = c(0,1.5), ylim = c(0,105),
 #'  xname = "Time (Years)", yname = "Concentration")
 #'
 #' @import ggplot2
@@ -54,8 +54,9 @@ step1_plot_pred <- function (step1_down_object, xname = NULL, yname = NULL,
 
   plot = ggplot() + geom_point(data=dat, mapping=aes(x= time, y = y, colour = Celsius, shape = validation)) +
    labs( x = xname, y = yname) +
-   {if(!is.null(xlim))scale_x_continuous(limits = xlim)} +
-   {if(!is.null(ylim))scale_y_continuous(limits = ylim)} +
+   {if(!is.null(ylim)& is.null(xlim))coord_cartesian(ylim = ylim)} +
+   {if(is.null(ylim)& !is.null(xlim))coord_cartesian(xlim = xlim)} +
+   {if(!is.null(xlim) & !is.null(ylim))coord_cartesian(xlim = xlim, ylim = ylim)} +
    mytheme +
    geom_line(data=pred, mapping=aes(x= time, y = Response, colour = Celsius)) +
    scale_linetype_manual(name = NULL, values=c("solid", "dotted", "longdash")) +

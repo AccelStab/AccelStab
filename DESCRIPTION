@@ -6,7 +6,7 @@ Authors@R:
       person("Ben", "Wells", email = "wellsbenjy@gmail.com", role = c("cre")),
       person("Alex", "Ball", email = "alex_keith_ball@hotmail.com", role = "ctb"),
       person("Daniel", "Williams", email = "daniel@bayezian.com", role = "ctb"))
-Description: Estimate the Šesták–Berggren kinetic model (degradation model) from experimental data. A
+Description: Estimate the Šesták–Berggren kinetic model (degradation model) from experimental data.
   A closed-form (analytic) solution to the degradation model is implemented as a non-linear fit,
   allowing for the extrapolation of the degradation of a drug product - both in time and 
   temperature. Parametric bootstrap, with kinetic parameters drawn from the multivariate
