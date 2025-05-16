@@ -1,0 +1,315 @@
+---
+title: "Accelerated Stability Analysis using AccelStab in R"
+author: "Bernard G Francq, Ben Wells, Daniel Williams, Alex Ball"
+date: "2025-03-27"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Accelerated Stability Analysis using AccelStab in R}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(AccelStab)
+```
+
+## Introduction
+
+The recent pandemic highlighted the need for quick access to new drugs and vaccines for patients. However stability assessment represents a bottleneck when it is based on real-time data covering 2 or 3 years. To accelerate the decisions and ultimately the time-to-market, accelerated stability studies may be used with data obtained for 6 months (sometimes less) in stressed conditions (higher temperature or higher humidity). Data from studies at accelerated and stress conditions can be used compellingly to establish shelf-life and predict the effect of temperatures different from the recommended condition (for example, during transportation). Three or four temperatures are typically tested with at least 3 time points in addition to the time zero.
+
+The kinetic Arrhenius model and its related Arrhenius plot are oversimplified to extrapolate the critical quality attribute over time. Furthermore, data obtained at fridge temperature (5 Celsius) might show a positive slope degradation due to the measurement errors. This document illustrates the use of the ordinary differential equation (ODE) from Sestak-Berggren model. This equation models jointly all the data obtained at different temperatures, allowing for more accurate extrapolation of the degradation both in time and temperature.
+
+## The Sestak-Berggren model
+
+In this document, the focus will be the Sestak-Berggren 1-step model with a decreasing variable over time (i.e. the loss of potency over time) as it covers a large variety of accelerated stability studies:
+
+\begin{equation}\frac{\text{d}\alpha}{\text{d}t}=A_1 \exp{\left(\frac{-E_1}{RT}\right)}\left(1-\alpha\right)^{n_1},\end{equation}
+
+Where $t$ is the time, $\alpha$ is the degradation (the reaction progress), $A_1$ is the kinetic parameter, $E_1$ is the activation energy, $R$ is the universal gas constant and $T$ the temperature (in Kelvin). For the statistical modeling, this formula is rewritten as:
+
+\begin{equation}\frac{\text{d}\alpha}{\text{d}t}= \exp{\left(k_1\right)} \exp{\left(\frac{-k_2}{T}\right)}\left(1-\alpha\right)^{k_3},\end{equation}
+
+Where $k_1$, $k_2$ and $k_3$ are 3 kinetic parameters to estimate together with the intercept, $C_0$, which is the concentration (or any CQA) at time zero. This equation can be integrated by assuming that the degradation starts at time zero ($\alpha=0$ at $t=0$). The resulting formula is then a non-linear model given by:
+
+\begin{equation}Y = C_0 \sqrt[1-k_3]{1-\left(1-k_3\right)t\exp{\left(k_1-\frac{k_2}{T}\right)}}\end{equation}
+
+The 2 kinetic parameters $k_1$ and $k_2$ are highly correlated. An alternative model reduces this correlation by including the mean temperature of the study, $\bar{T}$, as follows:
+
+\begin{equation}Y = C_0 \sqrt[1-k_3]{1-\left(1-k_3\right)t\exp{\left(k_1-\frac{k_2}{T}+\frac{k_2}{\bar{T}}\right)}}\end{equation}
+
+In the special case of zero order reaction ($k_3=0$), the ODE model reduces to a straight line per temperature: 
+\begin{equation}Y = C_0 \left(1-t\exp{\left(k_1-\frac{k_2}{T}\right)}\right)\end{equation}
+In this document, the normality of the data and the homoscedasticity are assumed (equal variances across time and temperature).
+
+The R package AccelStab can be used to analyse an accelerated stability study and to visualise the statistical intervals. Two real data sets are included: antigenicity and potency.
+
+## Antigenicity
+
+The antigenicity of a candidate vaccine is investigated during an accelerated stability study where 4 temperatures are tested with time points from 0 to 5 months. The goal is to predict (to extrapolate) the antigenicity at the end of the (expected) shelf life (3 years) at 5C. The data set contains a total of 50 antigenicity measurements. The antigenicity data set can be downloaded as follows:
+
+```{r, include=FALSE}
+library(ggplot2)
+```
+
+```{r}
+library(AccelStab)
+data(antigenicity)
+antigenicity$Validate = as.factor(ifelse(antigenicity$time <= 0.5, 0, 1))
+head(antigenicity)
+```
+
+
+<!-- ```{r} -->
+<!-- dat = read.table("C:\\Users\\BGF64099\\OneDrive - GSK\\Documents\\My_abstract_Articles\\My_Articles_and_related\\Stability\\data\\data_CMV_stab_AS01E_all_CQA.txt", sep = "\t", header = T) -->
+<!-- xx = which(dat[,2] == "antigenicity" & dat[,3] == "gB" & dat[,4] == 3) -->
+<!-- #length(xx) -->
+<!-- dat = dat[xx,] -->
+
+<!-- dat$Celsius = dat$temperature -->
+<!-- dat$time = dat$N.days/365 -->
+<!-- dat$conc = dat$result -->
+
+<!-- dat$K = dat$Celsius + 273.15 -->
+<!-- dat$Validate = as.factor(ifelse(dat$time <= 0.5, 0, 1)) -->
+<!-- antigenicity = dat[, c("time", "Celsius", "K", "conc", "Validate")] -->
+<!-- ``` -->
+
+
+Four different temperatures are tested in several time points:
+
+```{r}
+table(antigenicity$Celsius)
+unique(antigenicity$time)
+```
+
+### Visualisation
+
+Data obtained after 6 months will be used for validation only (they are not used to fit the model). The raw data of the study can be visualised quickly with the help of the function step1_plot_desc as follows:
+
+```{r}
+step1_plot_desc(data = antigenicity, .time = "time", y = "conc", C = "Celsius", validation = "Validate", yname = "Antigenicity")
+```
+
+This plot displays the data points with one colour per temperature and connects the data points over time (through the mean values for replicated data).
+
+### Model Fit
+
+The main function step1_down contains several options to fit the model for a decreasing variable.
+
+```{r}
+args(step1_down)
+```
+
+The user must give the data frame, the y variable (column name), time variable and a Celsius or Kelvin variable. The starting values for the algorithm (non-linear fit) can be given with the argument parms. If null (by default), the algorithm will use random numbers as starting values (our recommendation unless the user has reasonable values). The model is then fitted by calling step1_down and the summary of the fit and other statistics are obtained by generic R functions:
+
+```{r}
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate")
+summary(res$fit)
+confint(res$fit)
+```
+
+
+The degrees of freedom are equal to 50 and the residual standard deviation is 3.9. All the parameters (the 3 kinetic parameters and the intercept) are highly significant. Note that the intercept is close to 100 (the theoretical antigenicity value at $t=0$) and its 95% confidence interval (CI) is given by [94.9, 101.2] which contains 100. The same results would be obtained by fixing the starting values in a list through the argument parms. This is useful if the model does not converge to an optimal solution with random starting values.
+
+```{r}
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100))
+summary(res$fit)
+confint(res$fit)
+```
+
+### Predictions
+
+The predictions are calculated, by default, for all temperatures included in the data set and from time zero to the largest time point. The number of time points for the predictions is controlled by the argument by (set to 101 by default). All the predictions are embedded in a data frame called prediction from the model fit.
+
+```{r}
+head(res$prediction[,1:5])
+```
+
+The predictions can be visualised with the function step1_plot_pred. A plot is then drawn with the R package ggplot2. If needed, one can easily add any additional aesthetics or line from the ggplot graph.
+
+```{r}
+step1_plot_pred(res, yname = "Antigenicity")
+```
+
+As the goal of an accelerated stability study is to extrapolate the CQA for a longer time period, the predictions can be extrapolated in AccelStab by re-running step1_down and using the argument max_time_pred. For example, the following code will predict the antigenicity until 3 years and a lower specification limit (LSL) is added at 65.
+
+```{r}
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100), max_time_pred = 3)
+graph = step1_plot_pred(res, yname = "Antigenicity")
+graph = graph + geom_hline(aes(yintercept = 65), linetype = "dotted")
+graph
+```
+
+The model can also extrapolate the degradation for any temperature not included in the design. This is illustrated in the following line by extrapolating the degradation at 2C by using the argument temp_pred_C in the step1_down function.
+
+```{r}
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100), max_time_pred = 3, temp_pred_C = 2)
+step1_plot_pred(res, yname = "Antigenicity")
+
+```
+
+This option is very useful to predict long-term storage at 5C when no data are collected at 5C. This is illustrated in the following lines by re-running step1_down without the data at 5C (except at time zero), then extrapolating the predictions at 5C.
+
+```{r}
+subdat = antigenicity[!(antigenicity$Celsius == "5" & antigenicity$time != 0),]
+res = step1_down(data = subdat, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, temp_pred_C = 5)
+step1_plot_pred(res, yname = "Antigenicity")
+
+```
+
+
+### Statistical Intervals and Visualisation
+
+Pointwise confidence intervals (CIs) and prediction intervals (PIs) are given in the data frame predictions with a default 95% confidence level.
+
+```{r}
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
+head(res$prediction[,-c(3,6:8)])
+```
+
+Our recommendation to calculate the statistical intervals is to sample the coefficients within the multi-t distribution by using the argument draw. This gives, by default, 10^4 sets of coefficients similarly to the posterior distribution in Bayesian (without any prior). The predictions are calculated for every set of coefficients. The quantiles (typically 2.5 and 97.5%) are then calculated for each temperature and each time point in the prediction data frame in order to obtain the confidence or the prediction intervals. The drawing technique does not require any additional fit which is a main advantage compared to other techniques like bootstrapping. If the draw option is set to null, then, the delta method will be used (this will give symmetric interval around the predicted curves).
+
+Three main functions are available in AccelStab to visualise the statistical intervals. The first one, step1_plot_CI, can be used to visualise the predictions with confidence intervals. The second one, step1_plot_PI, can be used to visualise the predictions with prediction intervals. The third one, step1_plot_T, can be used to visualise the confidence and prediction interval for a given temperature. A ribbon can be added easily by using the argument ribbon.
+
+```{r}
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
+step1_plot_CI(res, yname = "Antigenicity")
+step1_plot_PI(res, yname = "Antigenicity", ribbon = TRUE)
+step1_plot_T(res, focus_T = 5, yname = "Antigenicity", ribbon = TRUE)
+```
+
+## Temperature Excursion
+
+A Temperature excursion is any deviation from the product's optimal temperature range during either transport, handling or storage. The excursion function within AccelStab allows for straightforward estimation of the effect that temperature excursions have on a product and the corresponding confidence and prediction intervals. We have modified the Sestak-Berggren model to 'carry over' degradation from the previous phase. There are two new variables $t_p$ represents the time since the start of that phase, $\alpha'$ is the degradation at the end of the previous phase.
+
+\begin{equation}Y = C_0 \sqrt[1-k_3]{(1-\alpha')^{(1-k_3)}-\left(1-k_3\right)t_p\exp{\left(k_1-\frac{k_2}{T}\right)}}\end{equation}
+
+This updated equation is incorporated into the excursion function. The following example will estimate a temperature excursion on top of the antigenicity data set. Initially the product is stored at 5 degrees for 6 months, then it is subject to 35 degrees for 1 month, then it is returned to 6 degrees for 17 months. Predictions and intervals are available alongside a plot.
+
+```{r}
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
+exc <- excursion(res, temp_changes = c(5,35,6), time_changes = c(6/12,7/12,24/12), yname = "Antigenicity")
+tail(exc$predictions[,-c(4)])
+exc$excursion_plot
+```
+
+## Customised calculations from sampling in the multi-t
+
+It is straightforward to calculate any statistics by sampling from the multi-t distribution. For example, the loss in antigenicity at 1 year 5C can be calculated and its 95% CI obtained from the set of coefficients drawn in the multi-t. The function step1_sample_mvt samples coefficients in the multi-t distribution.
+
+```{r}
+draws = step1_sample_mvt(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", draw = 10^4)
+draws = as.data.frame(draws)
+head(draws)
+```
+
+The predictions at 1 year can be calculated "by hand" as follows and compared to the predictions at t0:
+```{r}
+p1 = draws$c0 - draws$c0 * (1 - ((1 - draws$k3) * (1/(1 - draws$k3) - 1 * exp(draws$k1 - draws$k2 / (5+273.15))))^(1/(1-draws$k3)))
+loss_1y = 1 - p1/draws$c0
+mean(loss_1y)
+quantile(loss_1y, c(0.025, 0.975))
+hist(loss_1y, main = "Lost (%) in 1 year at 5C")
+abline(v = mean(loss_1y), lwd = 2, col = 3)
+abline(v = quantile(loss_1y, c(0.025, 0.975)), lwd = 2, col = 3, lty = 2)
+```
+
+One can see that the expected loss is 19.5% with a 95% CI given by [14.8, 24.6]%.
+
+
+## Zero order kinetic: Potency
+
+In this data set, the potency of a vaccine is measured with 3 temperatures and time points from 0 to 6 months (0, 3 and 6 months at 5C, and 1.5, 3 and 6 months at 25C, and 1, 2 and 4 weeks at 37C). The goal is to predict the vaccine drug product potency at 5C in 3 years. The data set contains a total of 78 potency measurements including 55 measurements until 6 months and 23 measurements obtained a posteriori at 5C (from 6 months to 3 years) used to validate the model.
+
+
+```{r}
+data(potency)
+potency$Validate = as.factor(ifelse(potency$Time < 8, 0, 1))
+head(potency)
+step1_plot_desc(data = potency, .time = "Time", y = "Potency", C = "Celsius", validation = "Validate", yname = "Potency")
+```
+
+### Model Fit
+
+The model is fitted by calling step1_down:
+
+```{r}
+res = step1_down(data = potency, y = "Potency", .time = "Time", C = "Celsius", validation = "Validate")
+summary(res$fit)
+confint(res$fit)
+```
+
+One can see that the kinetic order is estimated as zero by the model. A warning is then printed to suggest to the user to rerun the code with the option zero_order = TRUE.
+
+```{r}
+res = step1_down(data = potency, y = "Potency", .time = "Time", C = "Celsius", validation = "Validate", zero_order = TRUE)
+summary(res$fit)
+confint(res$fit)
+```
+
+Built-in visualisations of residuals are produced as a list of five plots, the first of which is a histogram.
+
+```{r}
+step1_plot_diagnostic(res)[1]
+```
+
+### Starting Values
+
+The root mean square error (RMSE) can be calculated by the function step1_down_rmse for any sets of starting values. This might be useful to choose the starting values to model the fit with step1_down function. The following heat map illustrates the RMSE for multiple sets of k1 and k2. A log scale is used for better visualisation.
+
+```{r}
+RMSE = step1_down_rmse(data = potency, y = "Potency", .time = "Time",
+ C = "Celsius", parms = list(c0 = 9.5, k1 = seq(38, 42, 0.02),
+  k2 = seq(12000, 14000, 5), k3 = 0))
+RMSE$logrmse = log(RMSE$rmse)
+
+plot = ggplot() + geom_point(data=RMSE, mapping=aes(x= k1, y = k2, colour = logrmse), size = 1.5, stroke = 0)
+plot = plot + labs( x = "k1", y = "k2")
+plot = plot + scale_color_gradient2(midpoint = mean(RMSE$logrmse), low = "blue", mid = "yellow", high = "green")
+plot
+```
+
+Note that the two kinetic parameters k1 and k2 are highly correlated. One might use the option reparameterisation = TRUE, if needed.
+
+### Predictions and Statistical Intervals
+
+The predictions and statistical intervals can be obtained as previously explained.
+
+```{r, warning=FALSE}
+head(res$prediction[,-(6:8)])
+plot = step1_plot_pred(res, yname = "Potency")
+plot = plot + scale_y_continuous(limits = c(5,10))
+plot
+plot = step1_plot_T(res, focus_T = 5, yname = "Potency", ribbon = TRUE)
+plot = plot + scale_y_continuous(limits = c(5,10))
+plot
+```
+
+### Inverse Predictions
+
+To illustrate the use of sampling within the multi-t distribution, consider a lower specification limit equal to 9. It is then straightforward to calculate the time needed to reach this limit at 5C. This can be solved by sampling the coefficients of the fit within the multi-t distribution. The inverse prediction is then calculated from the sets of coefficients. 
+
+
+```{r}
+draws = step1_sample_mvt(data = potency, y = "Potency", .time = "Time", C = "Celsius", validation = "Validate", draw = 10^4, zero_order = TRUE)
+draws = as.data.frame(draws)
+head(draws)
+T9 = (1 - 9/draws$c0) / exp(draws$k1 - draws$k2 / (5+273.15))
+```
+
+The vector T9 is the distribution of time needed to reach the lower specification (9). This distribution can be visualised with a histogram where the estimated mean and its 95% CI are added.
+
+```{r}
+mean(T9)
+quantile(T9, c(0.025, 0.975))
+hist(T9, main = "Time to reach the lower specification at 5C")
+abline(v = mean(T9), lwd = 2, col = 3)
+abline(v = quantile(T9, c(0.025, 0.975)), lwd = 2, col = 3, lty = 2)
+```

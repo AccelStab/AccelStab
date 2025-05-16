@@ -5,3 +5,5 @@
 ^cran-comments\.md$
 ^R/Testing_rmse\.R$
 ^CRAN-SUBMISSION$
+^doc$
+^Meta$

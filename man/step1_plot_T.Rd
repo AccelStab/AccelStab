@@ -41,19 +41,21 @@ Plot the stability data and visualise the predictions focusing on one
 chosen temperature with confidence and prediction intervals.
 }
 \examples{
-#load potency data
+#Load potency data
 data(potency)
 
-#run step1_down fit
+#Run step1_down fit
 fit1 <- step1_down(data = potency, y = "Potency", .time = "Time",
  C = "Celsius", zero_order = TRUE)
 
-#plot raw data with prediction curves with focus on temperature in dataset.
-step1_plot_T(fit1, focus_T = 5,ribbon = TRUE, xlim = NULL, ylim = c(0,12),
+#Plot raw data with prediction curves with focus on temperature in dataset.
+#Also limit x-axis to values between 0 and 10 and limit y-axis to values between 0 and 12.
+step1_plot_T(fit1, focus_T = 5,ribbon = TRUE, xlim = c(0,10), ylim = c(0,12),
  xname = "Time (Month)", yname = "Potency")
 
-#plot raw data with prediction curves with focus on temperature not in dataset.
-step1_plot_T(fit1, focus_T = -10,ribbon = TRUE, xlim = NULL, ylim = c(0,12),
+#Plot raw data with prediction curves with focus on temperature not in dataset.
+#Also limit x-axis to values between 0 and 10 and limit y-axis to values between 0 and 12.
+step1_plot_T(fit1, focus_T = -10,ribbon = TRUE, xlim = c(0,10), ylim = c(0,12),
  xname = "Time (Months)", yname = "Potency")
 
 }

@@ -34,13 +34,13 @@ Use the fit object from the step1.down function to plot the accelerated
 stability data and visualise the predictions.
 }
 \examples{
-#load antigenicity data
+#Load antigenicity data
 data(antigenicity)
 
 fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
  C = "Celsius", max_time_pred = 3)
 
-step1_plot_pred(step1_down_object = fit1, xlim = NULL, ylim = NULL,
+step1_plot_pred(step1_down_object = fit1, xlim = c(0,1.5), ylim = c(0,105),
  xname = "Time (Years)", yname = "Concentration")
 
 }

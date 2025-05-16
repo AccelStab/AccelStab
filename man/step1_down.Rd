@@ -18,7 +18,8 @@ step1_down(
   confidence_interval = 0.95,
   by = 101,
   reparameterisation = FALSE,
-  zero_order = FALSE
+  zero_order = FALSE,
+  ...
 )
 }
 \arguments{
@@ -33,9 +34,11 @@ step1_down(
 
 \item{C}{Celsius variable (numeric or column name) (optional).}
 
-\item{validation}{Validation dummy variable, the column must contain only 1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).}
+\item{validation}{Validation dummy variable, the column must contain only
+1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).}
 
-\item{draw}{Number of simulations used to estimate confidence intervals. When set to NULL the calculus method is used, however this is not recommended.}
+\item{draw}{Number of simulations used to estimate confidence intervals.
+When set to NULL the calculus method is used, however this is not recommended.}
 
 \item{parms}{Starting values for the parameters as a list - k1, k2, k3, and c0.}
 
@@ -54,6 +57,8 @@ intervals around the predictions.}
 model which aims to reduce correlation between k1 and k2.}
 
 \item{zero_order}{Set kinetic order, k3, to zero (straight lines).}
+
+\item{...}{Further arguments to passed to minpack.lm.}
 }
 \value{
 An SB class object, a list including the following elements:
@@ -71,7 +76,14 @@ Fit the one-step Šesták–Berggren kinetic model.
 }
 \details{
 Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-accelerated stability data from an R dataframe format. Parameters are kept in even when not significant.
+accelerated stability data that has been stored in an R data frame. Additionally,
+predictions of the mean at each tested temperature are returned, including associated
+confidence and prediction intervals, which can be subsequently visualised with
+step1_plot_pred(), step1_plot_CI(), step1_plot_PI() and step1_plot_T(). Kinetic
+parameters (k1, k2 and, if used, k3) are retained in the model even if one or more of
+these parameters turn out to be non-significant. Further arguments relating to
+model fitting, such as setting lower bounds for one or more model parameters,
+may be passed.
 }
 \examples{
 #load antigenicity and potency data.
@@ -92,5 +104,9 @@ fit3 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",
 #reparameterisation is TRUE.
 fit4 <- step1_down(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
   reparameterisation = TRUE, draw = 5000)
+
+#Use a custom lower bound for k1 (default is 0).
+fit5 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",
+  reparameterisation = TRUE, zero_order = TRUE, draw = 5000, lower = c(-Inf, 0, 0))
 
 }

@@ -2,9 +2,7 @@
 
 0 errors | 0 warnings | 1 notes
 
-* Want to change the maintainer
-Maintainer: 'Ben Wells <benwells@bayezian.com>'
-  New maintainer:
-    Ben Wells <benwells@bayezian.com>
-  Old maintainer(s):
+New maintainer:
     Alex Ball <alex_keith_ball@hotmail.com>
+  Old maintainer(s):
+    Ben Wells <wellsbenjy@gmail.com>

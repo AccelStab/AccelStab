@@ -57,11 +57,11 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7, residuals = "clas
   dat$predicted <- dat$y - dat$residuals
 
 # Generate predictions and residuals for validation data if present and append to data used in model fitting
-if(!is.null(validation)){ 
+if(!is.null(validation)){
      Kref = mean(dat$K)
      c0 = step1_down_object$fit$par$c0
-     k1 = step1_down_object$fit$par$k1 
-     k2 = step1_down_object$fit$par$k2 
+     k1 = step1_down_object$fit$par$k1
+     k2 = step1_down_object$fit$par$k2
      if(step1_down_object$user_parameters$zero_order == FALSE) {
      k3 = step1_down_object$fit$par$k3 }
 
@@ -80,8 +80,8 @@ if(!is.null(validation)){
 
      val_residuals = val_dat$y - val_predicted
 
-     val_dat = data.frame(val_dat, residuals = val_residuals, predicted = val_predicted) 
-     dat = rbind(dat, val_dat)               
+     val_dat = data.frame(val_dat, residuals = val_residuals, predicted = val_predicted)
+     dat = rbind(dat, val_dat)
 
     shape_types <- c(16,1)
     names(shape_types) <- c("Fit", "Validation")    }
@@ -226,4 +226,4 @@ if(!is.null(validation)){
   return(results)
 }
 
-globalVariables(c('residuals','density','predicted'))
+globalVariables(c('residuals','density','predicted','x'))

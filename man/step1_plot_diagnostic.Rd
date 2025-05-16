@@ -14,7 +14,7 @@ step1_plot_diagnostic(step1_down_object, bins = 7, residuals = "classic")
 \item{residuals}{The type of residuals to plot classic/studentized/standardized (default classic).}
 }
 \value{
-A list containing the four ggplot2 plots.
+A list containing the five ggplot2 plots.
 }
 \description{
 Generate residual diagnostic plots from a step1_down fit.
@@ -23,8 +23,8 @@ Generate residual diagnostic plots from a step1_down fit.
 Use the fit object obtained from the step1_down function to plot the
 residual diagnostic plots, assess the quality of fit and search for anomalies.
 Change the type of Residuals assessed.
-Plots created are: Residuals Histogram, Observed Vs Predicted results, Residuals
-Vs Predicted results and QQplot of Residuals.
+Plots created are: Residuals Histogram, QQ Plot of Residuals, Observed Vs Predicted results, Residuals
+Vs Predicted results and Residuals By Time.
 }
 \examples{
 #load antigenicity data
