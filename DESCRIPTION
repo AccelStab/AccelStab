@@ -1,6 +1,6 @@
 Package: AccelStab
 Title: Accelerated Stability Kinetic Modelling
-Version: 2.2.0
+Version: 2.2.1
 Authors@R: 
     c(person("Bernard G", "Franq", email = "accelstab@gmail.com", role = c("aut", "cph")),
       person("Ben", "Wells", email = "wellsbenjy@gmail.com", role = "ctb"),
