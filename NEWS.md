@@ -1,3 +1,7 @@
+# AccelStab 1.2.1
+
+- Fixed a minor plot issue in the vignette.
+
 # AccelStab 2.2.0
 
 This is a minor release which adds extra functionality to existing functions plus
