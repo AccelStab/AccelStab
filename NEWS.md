@@ -1,4 +1,4 @@
-# AccelStab 1.2.1
+# AccelStab 2.2.1
 
 - Fixed a minor plot issue in the vignette.
 
