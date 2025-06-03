@@ -159,7 +159,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
 
@@ -212,7 +212,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
 
@@ -266,7 +266,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
   }else if(!reparameterisation & !zero_order){ # No re-parameterisation and k3 not zero
@@ -321,7 +321,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
 
