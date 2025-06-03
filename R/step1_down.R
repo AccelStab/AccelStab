@@ -68,7 +68,7 @@
 #' fit5 <- step1_down(data = potency, y = "Potency", .time = "Time",C = "Celsius",
 #'   reparameterisation = TRUE, zero_order = TRUE, draw = 5000, lower = c(-Inf, 0, 0))
 #'
-#' @importFrom stats vcov coef runif confint rnorm quantile qt complete.cases
+#' @importFrom stats vcov coef runif confint rnorm rchisq quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
 #' @importFrom mvtnorm rmvt
 #'
@@ -234,6 +234,8 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     SIG = stats::vcov(fit)
     sigma = summary(fit)$sigma
     DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
+
     pred = expand.grid(time = times.pred, K = Temps)
     pred$Degradation = pred$time * exp(k1 - k2/pred$K + k2/Kref)
     pred$Response = c0 - c0 * pred$Degradation
@@ -255,13 +257,15 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         return(conc)
       }
       # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coef(fit))
+      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
       res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
       CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-      res.boot = res.boot + rnorm(draw*length(pred$time), 0, sigma)
+      sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
+      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
+
       PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
@@ -333,6 +337,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     SIG = vcov(fit)
     sigma = summary(fit)$sigma
     DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]  
 
     pred = expand.grid("time" = times.pred, K = Temps)
     pred$Degradation = pred$time * exp(k1 - k2 / pred$K)
@@ -354,17 +359,16 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         return(conc)
       }
       # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coef(fit))
+      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
       res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
       CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-      res.boot = res.boot + rnorm(draw*length(pred$time), 0, sigma)
+      sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
+      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
       PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-
     }
 
 ## Model type 3 - reparameterisation and k3 is not zero
@@ -440,6 +444,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     SIG = vcov(fit)
     sigma = summary(fit)$sigma
     DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
     pred = expand.grid("time" = times.pred, K = Temps)
     pred$Degradation = 1 - ((1 - k3) * (1/(1 - k3) - pred$time * exp(k1 - k2 / pred$K + k2 / Kref)))^(1/(1-k3))
@@ -462,7 +467,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         return(conc)
       }
       # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
+      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
       res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
       no_k3_below0 <- sum(rand.coef[,3] < 0)
@@ -473,11 +478,11 @@ if (!"lower" %in% names(minpack_args)) 	{	##
       CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-      res.boot = res.boot + rnorm(draw*length(pred$time), 0, sigma)
+      sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
+      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
+
       PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-
     }
 
 ## Model type 4 - no reparameterisation and k3 is not 0
@@ -551,6 +556,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     SIG = vcov(fit)
     sigma = summary(fit)$sigma
     DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
     pred = expand.grid("time" = times.pred, K = Temps)
     pred$Degradation = 1 - ((1 - k3) * (1/(1 - k3) - pred$time * exp(k1 - k2 / pred$K)))^(1/(1-k3))
@@ -572,7 +578,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         return(conc)
       }
       # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
+      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
       res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
       no_k3_below0 <- sum(rand.coef[,3] < 0)
@@ -583,7 +589,8 @@ if (!"lower" %in% names(minpack_args)) 	{	##
       CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-      res.boot = res.boot + rnorm(draw*length(pred$time), 0, sigma)
+      sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
+      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
       PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
