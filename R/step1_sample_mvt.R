@@ -149,8 +149,8 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
 
 
     SIG = stats::vcov(fit)
-
-
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
         pred_fct = function(coef.fit)
         {
@@ -159,7 +159,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coef(fit))
+        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
 
@@ -201,6 +201,8 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
     }
 
     SIG = vcov(fit)
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
         pred_fct = function(coef.fit)
         {
@@ -210,7 +212,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coef(fit))
+        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
 
@@ -254,6 +256,8 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
 
     SIG = vcov(fit)
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
         pred_fct = function(coef.fit)
         {
@@ -262,7 +266,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
+        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
   }else if(!reparameterisation & !zero_order){ # No re-parameterisation and k3 not zero
@@ -307,7 +311,9 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
 
     SIG = vcov(fit)
-
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
+  
         pred_fct = function(coef.fit)
         {
           degrad = 1 - ((1 - coef.fit[3]) * (1/(1 - coef.fit[3]) - pred$time * exp(coef.fit[1] - coef.fit[2] / pred$K)))^(1/(1-coef.fit[3]))
@@ -315,7 +321,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
+        rand.coef = rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
 
 
