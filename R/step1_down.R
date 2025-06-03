@@ -95,7 +95,7 @@ step1_down <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
     confidence_interval = confidence_interval, by = by,
     reparameterisation = reparameterisation, zero_order = zero_order)
 
-  ## Additional arguments in the call will be passed to model fitting with minipak.lm
+  ## Additional arguments in the call will be passed to model fitting with minpack.lm
   minpack_args = list(...)                    ##
 
   ## Temperature: both C and K are provided

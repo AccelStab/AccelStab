@@ -43,39 +43,41 @@
 #' @export step1_sample_mvt
 
 step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
-                        draw, parms = NULL, reparameterisation = FALSE, zero_order = FALSE){
+                        draw, parms = NULL, reparameterisation = FALSE, zero_order = FALSE, ...){
 
   if (is.null(K) & is.null(C))
     stop("Select the temperature variable in Kelvin or Celsius")
+  
   if (!is.null(parms) & !is.list(parms))
     stop("The starting values for parameters must be a list, or keep as NULL")
 
+    if (!is.null(validation))
+    if (!all(data[,validation] %in% c(0,1)))
+      stop("Validation column must contain 1s and 0s only")
 
+  minpack_args = list(...)
+  
+  ## Temperature: both C and K are provided
   if(!is.null(C) & !is.null(K)) {
-
     data[, C] <- ifelse(is.na(data[, C]) & !is.na(data[, K]),
-                        data$K - 273.15,
+                        data[, K] - 273.15,
                         data[, C])
-
     data[, K] <- ifelse(is.na(data[, K]) & !is.na(data[, C]),
-                        data$C + 273.15,
-                        data[, K])
-  }
+                        data[, C] + 273.15,
+                        data[, K])   }
 
+  ## Temperature: only C or only K is provided
+  if (!is.null(C) & is.null(K)) {
+   K = 'K'
+   data[, K] = data[, C] + 273.15  }
+  if (!is.null(K) & is.null(C)) {
+    C = 'C'
+    data[, C] = data[, K] - 273.15 }
+  
   data <- data[complete.cases(data[, c(C,K,y,.time)]), ]
 
   dat = data
-
-  if (!is.null(validation))
-    if (!all(dat[,validation] %in% c(0,1)))
-      stop("Validation column must contain 1s and 0s only")
-
-  if (is.null(K))
-    dat$K = dat[, C] + 273.15
-  if (is.null(C)) {
-    dat$C = dat[, K] - 273.15
-    C = "C"}
-
+  dat$K = dat[, K]
   Kref = mean(dat$K)
   dat$Celsius = as.factor(dat[, C])
   dat$time = dat[, .time]
@@ -111,8 +113,13 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
     c0_initial <- mean(sorted_data$y[selected_rows])
   }
 
+  ## Model type 1 - reparameterisation and k3 = 0
   if(reparameterisation & zero_order){ # reparameterisation and k3 is 0
-    MyFctNL = function(parms) { # Make function
+
+## Print a message informing lower bounds = 0 may not be suitable with the reparamerised version
+cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n")
+
+  MyFctNL = function(parms) { # Make function
       k1 = parms$k1
       k2 = parms$k2
       c0 = parms$c0
@@ -122,35 +129,59 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
       return(residual)
     }
 
+  if (!"fn" %in% names(minpack_args)) {	##
+    minpack_args$fn =  MyFctNL    }     ##
+
     # Fit model :
     if (!is.null(parms)) {
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
+     minpack_args$par =  parms                          ##
+    if (!"lower" %in% names(minpack_args)) 	{	##
+    minpack_args$lower =  rep(0, length(parms))   }     ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+  fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
     else {
       repeat {
-        parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1,
-                                                                    1000, 20000), c0 = c0_initial)
-        fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
-                                                  fn = MyFctNL, lower = rep(0, length(parms))))
-        res = tryCatch({
-          summary(fit)
-        }, error = function(e) e, warning = function(w) w)
-        res2 = tryCatch({
+        suppressWarnings(rm(fit))
+
+        parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1, 1000, 20000), c0 = c0_initial)
+
+minpack_args$par = parms
+
+if (!"lower" %in% names(minpack_args)) 	{	##
+	minpack_args$lower =  rep(0, length( parms ))   }     ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+  fit = suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
+
+   fit <- tryCatch({
+          suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        vcov_test <- tryCatch({
           stats::vcov(fit)
-        }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
-            !inherits(res2, "error"))
-          (break)()
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        if(all(!(fit %in% c("error","warning"))) && all(!(vcov_test %in% c("error","warning", NaN)))){
+          break
+        }
       }
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
-    }
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
 
-
+ }
+    
     SIG = stats::vcov(fit)
-
-
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
         pred_fct = function(coef.fit)
         {
@@ -159,12 +190,10 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coef(fit))
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
-
-
-
-  }else if(!reparameterisation & zero_order){ # no reparameterisation and k3 is 0
+## Model type 2 - no reparameterisation and k3 = 0
+  }else if(!reparameterisation & zero_order){
     MyFctNL = function(parms) { # make function
       k1 = parms$k1
       k2 = parms$k2
@@ -176,31 +205,56 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
       residual = dat$y - Model
       return(residual)
     }
+
+  if (!"fn" %in% names(minpack_args)) 	{	##
+    minpack_args$fn =  MyFctNL    }             ##
+
     if (!is.null(parms)) { # fit model
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
+    minpack_args$par =  parms                       ##
+    if (!"lower" %in% names(minpack_args)) 	{   ##
+    minpack_args$lower =  rep(0, length(parms))   } ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
     else {
       repeat {
-        parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1,
-                                                                    1000, 20000), c0 = c0_initial)
-        fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
-                                                  fn = MyFctNL, lower = rep(0, length(parms))))
-        res = tryCatch({
-          summary(fit)
-        }, error = function(e) e, warning = function(w) w)
-        res2 = tryCatch({
+        suppressWarnings(rm(fit))
+
+        parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1, 1000, 20000), c0 = c0_initial)
+
+  minpack_args$par = parms ##
+
+if (!"lower" %in% names(minpack_args)) 	{	##
+	    minpack_args$lower =  rep(0, length( parms ))   }   ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+ fit <- tryCatch({
+          suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        vcov_test <- tryCatch({
           stats::vcov(fit)
-        }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
-            !inherits(res2, "error"))
-          (break)()
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        if(all(!(fit %in% c("error","warning"))) && all(!(vcov_test %in% c("error","warning", NaN)))){
+          break
+        }
       }
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
 
     SIG = vcov(fit)
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
         pred_fct = function(coef.fit)
         {
@@ -210,12 +264,15 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coef(fit))
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
+## Model type 3 - reparameterisation and k3 is not zero
+  }else if(reparameterisation & !zero_order){
 
+  ## Print a message informing lower bounds = 0 may not be suitable with the reparamerised version
+  cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n")
 
-  }else if(reparameterisation & !zero_order){ #reparameterisation and k3 is not zero
-    MyFctNL = function(parms) {
+   MyFctNL = function(parms) {
       k1 = parms$k1
       k2 = parms$k2
       k3 = parms$k3
@@ -225,35 +282,59 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
       residual = dat$y - Model
       return(residual)
     }
-    if (!is.null(parms)) { # Fit the model
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
+
+  if (!"fn" %in% names(minpack_args)) 	{	##
+    minpack_args$fn =  MyFctNL    }             ##
+
+  if (!is.null(parms)) { # Fit the model
+        minpack_args$par =  parms               ##
+  if (!"lower" %in% names(minpack_args)) 	{	##
+    minpack_args$lower =  rep(0, length(parms))   }     ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
     else {
       repeat {
-        parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1,
-                                                                    1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
-        fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
-                                                  fn = MyFctNL, lower = rep(0, length(parms))))
-        res = tryCatch({
-          summary(fit)
-        }, error = function(e) e, warning = function(w) w)
-        res2 = tryCatch({
+        suppressWarnings(rm(fit))
+
+        parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1, 1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
+
+  minpack_args$par = parms
+
+  if (!"lower" %in% names(minpack_args)) 	{	##
+	    minpack_args$lower =  rep(0, length( parms ))   }     ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+   fit <- tryCatch({
+          suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        vcov_test <- tryCatch({
           stats::vcov(fit)
-        }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
-            !inherits(res2, "error"))
-          (break)()
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        if(all(!(fit %in% c("error","warning"))) && all(!(vcov_test %in% c("error","warning", NaN)))){
+          break
+        }
       }
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
-    }
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
+ }
 
     k3 = coef(fit)[3]
-    if (k3 == 0){print("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
+     if (k3 == 0){cat(paste("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE","The model will continue with k3 = 0, so degradation is linear over time"," "," ", sep = "\n"))
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
-
     SIG = vcov(fit)
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
 
         pred_fct = function(coef.fit)
         {
@@ -262,10 +343,10 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
-
-  }else if(!reparameterisation & !zero_order){ # No re-parameterisation and k3 not zero
+## Model type 4 - no reparameterisation and k3 is not 0
+  }else if(!reparameterisation & !zero_order){
     MyFctNL = function(parms) {
       k1 = parms$k1
       k2 = parms$k2
@@ -278,36 +359,60 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
       return(residual)
 
     }
+
+  if (!"fn" %in% names(minpack_args)) 	{	##
+    minpack_args$fn =  MyFctNL    }             ##
+
     if (!is.null(parms)) { # Fitting the model
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
+    minpack_args$par =  parms                   ##
+  if (!"lower" %in% names(minpack_args)) 	{	##
+    minpack_args$lower =  rep(0, length(parms))   }   ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
     else {
       repeat {
-        parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1,
-                                                                    1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
-        fit = suppressWarnings(minpack.lm::nls.lm(par = parms,
-                                                  fn = MyFctNL, lower = rep(0, length(parms))))
-        res = tryCatch({
-          summary(fit)
-        }, error = function(e) e, warning = function(w) w)
-        res2 = tryCatch({
+        suppressWarnings(rm(fit))
+
+        parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1, 1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
+
+  minpack_args$par = parms
+
+  if (!"lower" %in% names(minpack_args)) 	{	##
+	    minpack_args$lower =  rep(0, length( parms ))   } ##
+
+	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+
+ fit <- tryCatch({
+          suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        vcov_test <- tryCatch({
           stats::vcov(fit)
-        }, error = function(e) e)
-        if (any(stats::coef(fit) != parms) && !inherits(res, "error") &&
-            !inherits(res2, "error"))
-          (break)()
+        },
+        error = function(e){"error"},
+        warning = function(w){"warning"})
+
+        if(all(!(fit %in% c("error","warning"))) && all(!(vcov_test %in% c("error","warning", NaN)))){
+          break
+        }
       }
-      fit = minpack.lm::nls.lm(par = parms, fn = MyFctNL, lower = rep(0,
-                                                                      length(parms)))
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
 
     k3 = coef(fit)[3]
-    if (k3 == 0){print("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE")
+    if (k3 == 0){cat(paste("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE","The model will continue with k3 = 0, so degradation is linear over time"," ", " ", sep = "\n"))
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(k3,4),". We suggest considering option zero_order = TRUE"))}
-
     SIG = vcov(fit)
-
+    DF = summary(fit)$df[2]
+    n.params = summary(fit)$df[1]
+  
         pred_fct = function(coef.fit)
         {
           degrad = 1 - ((1 - coef.fit[3]) * (1/(1 - coef.fit[3]) - pred$time * exp(coef.fit[1] - coef.fit[2] / pred$K)))^(1/(1-coef.fit[3]))
@@ -315,9 +420,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
           return(conc)
         }
         # Multi T bootstrap
-        rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coef(fit))
-
-
+        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
 
   }
 
@@ -330,7 +433,3 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
   return(rand.coef)
 
 }
-
-globalVariables(c('pred'))
-
-
