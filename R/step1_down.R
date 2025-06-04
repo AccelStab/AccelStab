@@ -255,7 +255,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[3] - coef.fit[3]*degrad
         return(conc)
       }
-      # Multi T draws
+      # Multi T samples
       rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
       rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
       res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
@@ -357,7 +357,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[3] - coef.fit[3]*degrad
         return(conc)
       }
-      # Multi T draws
+      # Multi T samples
       rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
       rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
       res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
@@ -466,7 +466,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[4] - coef.fit[4]*degrad
         return(conc)
       }
-      # Multi T draws
+      # Multi T samples
       rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
       rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
       res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
@@ -577,7 +577,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[4] - coef.fit[4]*degrad
         return(conc)
       }
-      # Multi T draws
+      # Multi T samples
       rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
       rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
       res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
