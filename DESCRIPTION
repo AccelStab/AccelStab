@@ -22,7 +22,6 @@ Imports:
     dplyr,
     ggplot2,
     minpack.lm,
-    mvtnorm,
     stats,
     scales
 Suggests: 

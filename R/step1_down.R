@@ -70,7 +70,6 @@
 #'
 #' @importFrom stats vcov coef runif confint rnorm rchisq quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
-#' @importFrom mvtnorm rmvt
 #'
 #' @export step1_down
 
@@ -256,18 +255,18 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[3] - coef.fit[3]*degrad
         return(conc)
       }
-      # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
-      res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+      # Multi T samples
+      rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+      rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+      res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
-      CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
       sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
-      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
-
-      PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      res.draw = res.draw + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
+      PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
 
 ## Model type 2 - no reparameterisation and k3 = 0
@@ -358,17 +357,18 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[3] - coef.fit[3]*degrad
         return(conc)
       }
-      # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
-      res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+      # Multi T samples
+      rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+      rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+      res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
-      CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
       sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
-      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
-      PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      res.draw = res.draw + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
+      PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
 
 ## Model type 3 - reparameterisation and k3 is not zero
@@ -466,23 +466,23 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[4] - coef.fit[4]*degrad
         return(conc)
       }
-      # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
-      res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+      # Multi T samples
+      rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+      rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+      res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
       no_k3_below0 <- sum(rand.coef[,3] < 0)
       if(no_k3_below0 > 0.5){
-        cat(paste(paste0(no_k3_below0*100/draw, "% of the bootstraps for k3 are below zero, this might have an adverse effect on the confidence interval, particularly if this value exceeds the confidence %."),"We suggest considering option zero_order = TRUE", sep = "\n"))
+        cat(paste(paste0(no_k3_below0*100/draw, "% of the draws for k3 are below zero, this might have an adverse effect on the confidence interval, particularly if this value exceeds the confidence %."),"We suggest considering option zero_order = TRUE", sep = "\n"))
       }
 
-      CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
       sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
-      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
-
-      PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      res.draw = res.draw + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
+      PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
 
 ## Model type 4 - no reparameterisation and k3 is not 0
@@ -577,22 +577,23 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         conc = coef.fit[4] - coef.fit[4]*degrad
         return(conc)
       }
-      # Multi T bootstrap
-      rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
-      res.boot = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+      # Multi T samples
+      rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+      rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+      res.draw = matrix(nrow = draw, ncol = nrow(pred), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
       no_k3_below0 <- sum(rand.coef[,3] < 0)
       if(no_k3_below0 > 0.5){
-        cat(paste(paste0(no_k3_below0*100/draw, "% of the bootstraps for k3 are below zero, this might have an adverse effect on the confidence interval, particularly if this value exceeds the confidence %."),"We suggest considering option zero_order = TRUE", sep = "\n"))
+        cat(paste(paste0(no_k3_below0*100/draw, "% of the draws for k3 are below zero, this might have an adverse effect on the confidence interval, particularly if this value exceeds the confidence %."),"We suggest considering option zero_order = TRUE", sep = "\n"))
       }
 
-      CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
       sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(pred$time), df = DF))
-      res.boot = res.boot + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
-      PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      res.draw = res.draw + rnorm(n = draw*length(pred$time), mean = 0, sd = sigma.dist)
+      PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
 
 

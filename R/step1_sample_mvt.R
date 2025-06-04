@@ -38,7 +38,6 @@
 #'
 #' @importFrom stats vcov coef runif confint rnorm quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
-#' @importFrom mvtnorm rmvt
 #'
 #' @export step1_sample_mvt
 
@@ -189,8 +188,9 @@ if (!"lower" %in% names(minpack_args)) 	{	##
           conc = coef.fit[3] - coef.fit[3]*degrad
           return(conc)
         }
-        # Multi T bootstrap
-        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        # Multi T samples
+        rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+        rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
 
 ## Model type 2 - no reparameterisation and k3 = 0
   }else if(!reparameterisation & zero_order){
@@ -263,8 +263,9 @@ if (!"lower" %in% names(minpack_args)) 	{	##
           conc = coef.fit[3] - coef.fit[3]*degrad
           return(conc)
         }
-        # Multi T bootstrap
-        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        # Multi T samples
+        rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+        rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
 
 ## Model type 3 - reparameterisation and k3 is not zero
   }else if(reparameterisation & !zero_order){
@@ -342,8 +343,9 @@ if (!"lower" %in% names(minpack_args)) 	{	##
           conc = coef.fit[4] - coef.fit[4]*degrad
           return(conc)
         }
-        # Multi T bootstrap
-        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        # Multi T samples
+        rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+        rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
 
 ## Model type 4 - no reparameterisation and k3 is not 0
   }else if(!reparameterisation & !zero_order){
@@ -419,8 +421,9 @@ if (!"lower" %in% names(minpack_args)) 	{	##
           conc = coef.fit[4] - coef.fit[4]*degrad
           return(conc)
         }
-        # Multi T bootstrap
-        rand.coef = mvtnorm::rmvt(draw, sigma = SIG, df = DF) + matrix(nrow = draw, ncol = n.params, byrow = TRUE, coef(fit))
+        # Multi T samples
+        rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+        rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
 
   }
 
