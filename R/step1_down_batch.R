@@ -3,7 +3,7 @@
 #' @description Fit the one-step Šesták–Berggren kinetic model including batch effects.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#' accelerated stability and batch data that has been stored in an R data frame. Additionally,
+#' accelerated stability and batch data that has been stored in an R data frame. Batch effects are Additionally,
 #' predictions of the mean at each tested temperature are returned for each batch, including associated
 #' confidence and prediction intervals, which can be subsequently visualised with
 #' step1_plot_pred(), step1_plot_CI(), step1_plot_PI() and step1_plot_T(). Kinetic
@@ -22,7 +22,6 @@
 #' @param validation Validation dummy variable, the column must contain only
 #'  1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).
 #' @param draw Number of simulations used to estimate confidence intervals.
-#'  When set to NULL the calculus method is used, however this is not recommended.
 #' @param parms Starting values for the parameters as a list - k1, k2, k3, and c0.
 #' @param temp_pred_C Integer or numeric value to predict the response for a
 #'  given temperature (in Celsius).
@@ -46,10 +45,21 @@
 #'  \item *sample_coefficients* - A matrix containing the coefficients sampled during bootstrapping.
 #'    }
 #'
-#' @examples #Create a df with 3 batches
-#' [Further example text]
-#' [Further example text]
-#' [Further example text]
+#' @examples # Create a dataset containing 3 batches based on antigenicity
+#' data = data.frame(
+#' time = rep(antigenicity$time, 3),
+#' Celsius = rep(antigenicity$Celsius, 3), 
+#' BatchID = rep(c("BatchA", "BatchB", "BatchC"), each = nrow(antigenicity)), 
+#' conc = c(antigenicity$conc, 
+#' rnorm(n = nrow(antigenicity), mean = antigenicity$conc - 10, sd = 3),
+#' rnorm(n = nrow(antigenicity), mean = antigenicity$conc + 10, sd = 3)))
+#' 
+#' # Fit model including effects of variable "BatchID"
+#' fit1 = step1_down_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID", y  = "conc")
+#'
+#' # Specify the factor coding for the batch variable, e.g., deviation coding, and fit model
+#' data$BatchID2 = factor(data$BatchID); contrasts(data$BatchID2) = contr.sum(3)
+#' fit2 = step1_down_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID2", y  = "conc")
 #'
 #' @importFrom stats vcov coef runif confint rnorm rchisq quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
@@ -64,6 +74,9 @@ step1_down_batch <- function (data, y, .time, batch, K = NULL, C = NULL, validat
  if (is.null(batch))
     stop("Select the batch or lot variable")
 
+ if (is.null(draw))
+    stop("The number entered for draw must be a positive integer")
+	
   if (is.null(K) & is.null(C))
     stop("Select the temperature variable in Kelvin or Celsius")
 
