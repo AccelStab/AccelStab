@@ -1,10 +1,10 @@
 #' @title Step1 Down Model With Batch Effects
 #'
-#' @description Fit the one-step Šesták–Berggren kinetic model along with batch effects.
+#' @description Fit the one-step Šesták–Berggren kinetic model including batch effects.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
 #' accelerated stability and batch data that has been stored in an R data frame. Additionally,
-#' predictions of the mean at each tested temperature are returned, including associated
+#' predictions of the mean at each tested temperature are returned for each batch, including associated
 #' confidence and prediction intervals, which can be subsequently visualised with
 #' step1_plot_pred(), step1_plot_CI(), step1_plot_PI() and step1_plot_T(). Kinetic
 #' parameters (k1, k2 and, if used, k3) are retained in the model even if one or more of
@@ -16,7 +16,7 @@
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
 #'  (required).
 #' @param .time Time variable contained within data (required).
-#' @param batch Batch variable denoting individual batches or lots contained within data; factor will be recognised (required).
+#' @param batch Batch variable denoting individual batch or lot IDs; factor coding may be used and will be recognised (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
 #' @param validation Validation dummy variable, the column must contain only
@@ -46,7 +46,7 @@
 #'  \item *sample_coefficients* - A matrix containing the coefficients sampled during bootstrapping.
 #'    }
 #'
-#' @examples #Create a df with batches
+#' @examples #Create a df with 3 batches
 #' [Further example text]
 #' [Further example text]
 #' [Further example text]
@@ -134,7 +134,6 @@ step1_down_batch <- function (data, y, .time, batch, K = NULL, C = NULL, validat
   batch_names = as.data.frame(levels(dat$batch))
   batch_coding = as.data.frame(contrasts(dat$batch))
   
-
   if (!is.null(temp_pred_C))
     Temps = unique(sort(c(Temps, temp_pred_C + 273.15)))
   if (is.null(max_time_pred))
@@ -186,7 +185,7 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
                                           }
                                  }
 
-      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
+      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
     
       residual = dat$y - eval(parse(text = test))
       return(residual)
@@ -201,7 +200,7 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
     if (!"lower" %in% names(minpack_args)) 	{
     minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
 	if(length(minpack_args$par) != length(minpack_args$lower))
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
   fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
@@ -213,16 +212,16 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
 
         for (i in 1:no_fixed_effect) {
           var_name <- paste0("b", i)
-          parms[[var_name]] <- rnorm(1, 0, 2)##
+          parms[[var_name]] <- rnorm(1, 0, 2)
         }
 
 minpack_args$par = parms
 
 if (!"lower" %in% names(minpack_args)) 	{	##
-	minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }     ##
+	minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	if(length(minpack_args$par) != length(minpack_args$lower))
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
   fit = suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
 
@@ -246,7 +245,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
 
  }
 
-    # Calculate the predictions
+    # Generate the predictions
     k1 = stats::coef(fit)[1]
     k2 = stats::coef(fit)[2]
     c0 = stats::coef(fit)[3]
@@ -264,7 +263,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     pred = expand.grid(time = times.pred, K = Temps, batch = batches)
     pred$Degradation = pred$time * exp(k1 - k2/pred$K + k2/Kref)
  
-    effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )   ##
+    effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )
     test = rep("", no_batches)
     for (i in 1: no_batches-1) {
     test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
@@ -278,15 +277,15 @@ if (!"lower" %in% names(minpack_args)) 	{	##
 # Function to be used in drawing from multi-t
 pred_fct = function(coef.fit) {
   degrad = pred$time * exp(coef.fit[1] - coef.fit[2] / pred$K + coef.fit[2] / Kref)
-  effs = paste0("(coef.fit[3] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3),"]", collapse = " + ") , ") - (coef.fit[3] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3), "]", collapse = " + "), ") * degrad"       )   ##
+  effs = paste0("(coef.fit[3] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3),"]", collapse = " + ") , ") - (coef.fit[3] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3), "]", collapse = " + "), ") * degrad"       )
   test = rep("", no_batches)
   for (i in 1: no_batches-1) {
     test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
     for (j in no_batches: no_batches) {
       test[j] = gsub("bn", j, effs)
                                        } }
-  test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
-  conc =  eval(parse(text = test)) ##
+  test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+  conc =  eval(parse(text = test))
   return(conc)
                                 }
 
@@ -329,22 +328,22 @@ pred_fct = function(coef.fit) {
                                           }
                                  }
 
-      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
+      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
     
       residual = dat$y - eval(parse(text = test))
       return(residual)
                                   }
 
-  if (!"fn" %in% names(minpack_args)) 	{	##
-    minpack_args$fn =  MyFctNL    }             ##
+  if (!"fn" %in% names(minpack_args)) 	{
+    minpack_args$fn =  MyFctNL    }
 
     # Fit model
     if (!is.null(parms)) {
-    minpack_args$par =  parms                       ##
-    if (!"lower" %in% names(minpack_args)) 	{   ##
-    minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))   } ##
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+    minpack_args$par =  parms
+    if (!"lower" %in% names(minpack_args)) 	{
+    minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))   }
+	if(length(minpack_args$par) != length(minpack_args$lower))
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
@@ -361,11 +360,11 @@ pred_fct = function(coef.fit) {
 
   minpack_args$par = parms ##
 
-if (!"lower" %in% names(minpack_args)) 	{	##
-	  minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }   ##
+if (!"lower" %in% names(minpack_args)) 	{
+	  minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	if(length(minpack_args$par) != length(minpack_args$lower))
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
  fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
@@ -393,7 +392,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
    
     for (i in 1:no_fixed_effect) {
       var_name <- paste0("b", i)
-      assign(var_name, fit$par[[var_name]])##
+      assign(var_name, fit$par[[var_name]])
     }
 
     SIG = vcov(fit)
@@ -404,7 +403,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     pred = expand.grid(time = times.pred, K = Temps, batch = batches)
     pred$Degradation = pred$time * exp(k1 - k2 / pred$K)
     
-    effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )   ##
+    effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )
     test = rep("", no_batches)
     for (i in 1: no_batches-1) {
     test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
@@ -418,15 +417,15 @@ if (!"lower" %in% names(minpack_args)) 	{	##
 # Function to be used in drawing from multi-T
 pred_fct = function(coef.fit) {
   degrad = pred$time * exp(coef.fit[1] - coef.fit[2] / pred$K)
-  effs = paste0("(coef.fit[3] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3),"]", collapse = " + ") , ") - (coef.fit[3] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3), "]", collapse = " + "), ") * degrad"       )   ##
+  effs = paste0("(coef.fit[3] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3),"]", collapse = " + ") , ") - (coef.fit[3] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 4:(no_fixed_effect+3), "]", collapse = " + "), ") * degrad"       )
   test = rep("", no_batches)
   for (i in 1: no_batches-1) {
     test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
     for (j in no_batches: no_batches) {
       test[j] = gsub("bn", j, effs)
                                        } }
-  test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
-  conc =  eval(parse(text = test)) ##
+  test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+  conc =  eval(parse(text = test))
   return(conc)
                                 }
 
@@ -458,12 +457,12 @@ pred_fct = function(coef.fit) {
 
       for (i in 1:no_fixed_effect) {
         var_name <- paste0("b", i)
-        assign(var_name, as.numeric(parms[i + 4])) ##
+        assign(var_name, as.numeric(parms[i + 4]))
                                     }
       
-      degrad = (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2/dat$K + k2/Kref)))^(1/(1 - k3)))##
+      degrad = (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2/dat$K + k2/Kref)))^(1/(1 - k3)))
       
-      effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad"       )   ##
+      effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad"       )
 
       test = rep("", no_batches)
             for (i in 1: no_batches-1) {
@@ -471,24 +470,24 @@ pred_fct = function(coef.fit) {
                  for (j in no_batches: no_batches) {
                      test[j] = gsub("bn", j, effs)
                                                    }
-                                        }               ##
+                                        }
 
-      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
+      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
       residual = dat$y - eval(parse(text = test))##
       return(residual)
     }
 
-  if (!"fn" %in% names(minpack_args)) 	{	##
-    minpack_args$fn =  MyFctNL    }             ##
+  if (!"fn" %in% names(minpack_args)) 	{
+    minpack_args$fn =  MyFctNL    }
 
   # Fit model:
   if (!is.null(parms)) { 
-        minpack_args$par =  parms               ##
-  if (!"lower" %in% names(minpack_args)) 	{	##
-    minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))   }     ##
+        minpack_args$par =  parms
+  if (!"lower" %in% names(minpack_args)) 	{
+    minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))   }
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	if(length(minpack_args$par) != length(minpack_args$lower))
+        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
@@ -500,16 +499,16 @@ pred_fct = function(coef.fit) {
 
       for (i in 1:no_fixed_effect) {
           var_name <- paste0("b", i)
-          parms[[var_name]] <- rnorm(1, 0, 2)##
+          parms[[var_name]] <- rnorm(1, 0, 2)
                                     }
 
   minpack_args$par = parms
 
-  if (!"lower" %in% names(minpack_args)) 	{	##
-	    minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))  }     ##
+  if (!"lower" %in% names(minpack_args)) 	{
+	    minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))  }
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	if(length(minpack_args$par) != length(minpack_args$lower))
+        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
    fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
@@ -552,33 +551,33 @@ pred_fct = function(coef.fit) {
     pred$Degradation = 1 - ((1 - k3) * (1/(1 - k3) - pred$time * exp(k1 - k2 / pred$K + k2 / Kref)))^(1/(1-k3))
     
 ## Predict response by batch  
-effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )   ##
+effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )
 
 test = rep("", no_batches)
 for (i in 1: no_batches-1) {
 test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
 for (j in no_batches: no_batches) {
 test[j] = gsub("bn", j, effs)
-      }
-                                                   }               ##
+                                  }
+                           }
 
-test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
+test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
 
-pred$Response = eval(parse(text = test))##
+pred$Response = eval(parse(text = test))
 
 # Function to be used in drawing from multi-T
       pred_fct = function(coef.fit){
           degrad = 1 - ((1 - coef.fit[3]) * (1/(1 - coef.fit[3]) - pred$time * exp(coef.fit[1] - coef.fit[2] / pred$K + coef.fit[2] / Kref)))^(1/(1-coef.fit[3]))
-          effs = paste0("(coef.fit[4] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4),"]", collapse = " + ") , ") - (coef.fit[4] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4), "]", collapse = " + "), ") * degrad"       )   ##
+          effs = paste0("(coef.fit[4] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4),"]", collapse = " + ") , ") - (coef.fit[4] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4), "]", collapse = " + "), ") * degrad"       )
           test = rep("", no_batches)
           for (i in 1: no_batches-1) {
             test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
             for (j in no_batches: no_batches) {
                  test[j] = gsub("bn", j, effs)
                                               }
-                                      }               ##
-         test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
-         conc =  eval(parse(text = test)) ##
+                                      }
+         test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+         conc =  eval(parse(text = test))
          return(conc)
                                    }
 
@@ -590,7 +589,7 @@ pred$Response = eval(parse(text = test))##
       no_k3_below0 <- sum(rand.coef[,3] < 0)
       if(no_k3_below0 > 0.5){
         cat(paste(paste0(no_k3_below0*100/draw, "% of the draws for k3 are below zero, this might have an adverse effect on the confidence interval, particularly if this value exceeds the confidence %."),"We suggest considering option zero_order = TRUE", sep = "\n"))
-      }
+                             }
 
       CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
       CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
@@ -614,29 +613,29 @@ pred$Response = eval(parse(text = test))##
         assign(var_name, as.numeric(parms[i + 4]))
                                     }
      degrad = (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2 / dat$K)))^(1/(1-k3)))##
-     effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")   ##
+     effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")
      test = rep("", no_batches)
      for (i in 1: no_batches-1) {
         test[i] = paste0("ifelse(dat$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
         for (j in no_batches: no_batches) {
             test[j] = gsub("bn", j, effs)
                                            }
-                                 }               ##
-     test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
-     residual = dat$y - eval(parse(text = test))##
+                                 }
+     test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+     residual = dat$y - eval(parse(text = test))
     return(residual)
                             }
 
-  if (!"fn" %in% names(minpack_args)) 	{	##
-    minpack_args$fn =  MyFctNL    }             ##
+  if (!"fn" %in% names(minpack_args)) 	{
+    minpack_args$fn =  MyFctNL    }
 
 # Fitting the model:
     if (!is.null(parms)) { 
-    minpack_args$par =  parms                   ##
-  if (!"lower" %in% names(minpack_args)) 	{	##
+    minpack_args$par =  parms
+  if (!"lower" %in% names(minpack_args)) 	{
     minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))    }
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	if(length(minpack_args$par) != length(minpack_args$lower))
+        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
@@ -648,16 +647,16 @@ pred$Response = eval(parse(text = test))##
 
        for (i in 1:no_fixed_effect) {
           var_name <- paste0("b", i)
-          parms[[var_name]] <- rnorm(1, 0, 2)##
+          parms[[var_name]] <- rnorm(1, 0, 2)
         }
 
   minpack_args$par = parms
 
-  if (!"lower" %in% names(minpack_args)) 	{	##
-          minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))    }     ##
+  if (!"lower" %in% names(minpack_args)) 	{
+          minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))    }
 
-  if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+  if(length(minpack_args$par) != length(minpack_args$lower))
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
  fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
@@ -688,7 +687,7 @@ pred$Response = eval(parse(text = test))##
     
    for (i in 1:no_fixed_effect) {
       var_name <- paste0("b", i)
-      assign(var_name, fit$par[[var_name]])##
+      assign(var_name, fit$par[[var_name]])
     }
 
      SIG = stats::vcov(fit)
@@ -699,30 +698,30 @@ pred$Response = eval(parse(text = test))##
     pred = expand.grid(time = times.pred, K = Temps, batch = batches)
     pred$Degradation = 1 - ((1 - k3) * (1/(1 - k3) - pred$time * exp(k1 - k2 / pred$K)))^(1/(1-k3))
    
-    effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )   ##
+    effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * pred$Degradation"       )
     test = rep("", no_batches)
     for (i in 1: no_batches-1) {
        test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
           for (j in no_batches: no_batches) {
               test[j] = gsub("bn", j, effs)
                                              }
-                                }               ##
-    test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
+                                }
+    test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
     pred$Response = eval(parse(text = test))##
 
 # Function to be used in drawing from multi-T
       pred_fct = function(coef.fit){
         degrad = 1 - ((1 - coef.fit[3]) * (1/(1 - coef.fit[3]) - pred$time * exp(coef.fit[1] - coef.fit[2] / pred$K)))^(1/(1-coef.fit[3]))
-        effs = paste0("(coef.fit[4] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4),"]", collapse = " + ") , ") - (coef.fit[4] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4), "]", collapse = " + "), ") * degrad"       )   ##
+        effs = paste0("(coef.fit[4] + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4),"]", collapse = " + ") , ") - (coef.fit[4] + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * coef.fit[", 5:(no_fixed_effect+4), "]", collapse = " + "), ") * degrad"       )
         test = rep("", no_batches)
         for (i in 1: no_batches-1) {
              test[i] = paste0("ifelse(pred$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
              for (j in no_batches: no_batches) {
                    test[j] = gsub("bn", j, effs)
                                                 }
-                                    }               ##
-       test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")  ##
-       conc =  eval(parse(text = test)) ##
+                                    }
+       test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+       conc =  eval(parse(text = test))
        return(conc)
                                   }
 
