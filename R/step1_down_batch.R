@@ -3,20 +3,24 @@
 #' @description Fit the one-step Šesták–Berggren kinetic model including batch effects.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#' accelerated stability and batch data that has been stored in an R data frame. Batch effects are Additionally,
-#' predictions of the mean at each tested temperature are returned for each batch, including associated
+#' accelerated stability and batch data that has been stored in an R data frame. Batch
+#' effects are provided by including batch as an independent variable affecting the
+#' response variable. Default factor coding for the batch variable is treatment coding
+#' where each batch level is compared to the reference level, but other coding schemas using
+#' contrasts() may be set and will be recognised. Additionally, predictions of the mean
+#' at each tested temperature and for each batch are returned, including associated
 #' confidence and prediction intervals, which can be subsequently visualised with
 #' step1_plot_pred(), step1_plot_CI(), step1_plot_PI() and step1_plot_T(). Kinetic
 #' parameters (k1, k2 and, if used, k3) are retained in the model even if one or more of
-#' these parameters turn out to be non-significant. Further arguments relating to
-#' model fitting, such as setting lower bounds for one or more model parameters,
-#' may be passed.
+#' these parameters turn out to be non-significant. Further arguments relating to model
+#' fitting, such as setting lower bounds for one or more model parameters, may be passed.
 #'
 #' @param data Dataframe containing accelerated stability data and batches (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
 #'  (required).
 #' @param .time Time variable contained within data (required).
-#' @param batch Batch variable denoting individual batch or lot IDs; factor coding may be used and will be recognised (required).
+#' @param batch Batch variable (column name) comprising individual batch or lot IDs (numeric
+#' or string) (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
 #' @param validation Validation dummy variable, the column must contain only
@@ -46,22 +50,21 @@
 #'    }
 #'
 #' @examples # Create a dataset containing 3 batches based on antigenicity
-#' data = data.frame(
-#' time = rep(antigenicity$time, 3),
-#' Celsius = rep(antigenicity$Celsius, 3), 
-#' BatchID = rep(c("BatchA", "BatchB", "BatchC"), each = nrow(antigenicity)), 
-#' conc = c(antigenicity$conc, 
+#' data = data.frame(time = rep(antigenicity$time, 3),
+#' Celsius = rep(antigenicity$Celsius, 3),
+#' BatchID = rep(c("BatchA", "BatchB", "BatchC"), each = nrow(antigenicity)),
+#' conc = c(antigenicity$conc,
 #' rnorm(n = nrow(antigenicity), mean = antigenicity$conc - 10, sd = 3),
 #' rnorm(n = nrow(antigenicity), mean = antigenicity$conc + 10, sd = 3)))
 #' 
-#' # Fit model including effects of variable "BatchID"
-#' fit1 = step1_down_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID", y  = "conc")
+#' # Fit a model including effects for the variable "BatchID"
+#' fit1 = step1_down_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID", y = "conc")
 #'
-#' # Specify the factor coding for the batch variable, e.g., deviation coding, and fit model
+#' # Specify the type of factor coding for the batch variable, e.g., deviation coding, and a fit model
 #' data$BatchID2 = factor(data$BatchID); contrasts(data$BatchID2) = contr.sum(3)
-#' fit2 = step1_down_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID2", y  = "conc")
+#' fit2 = step1_down_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID2", y = "conc")
 #'
-#' @importFrom stats vcov coef runif confint rnorm rchisq quantile qt complete.cases
+#' @importFrom stats vcov coef contrasts runif confint rnorm rchisq quantile qt complete.cases
 #' @importFrom minpack.lm nls.lm
 #'
 #' @export step1_down
