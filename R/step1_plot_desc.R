@@ -10,6 +10,8 @@
 #' @param .time Time variable contained within data.
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
+#' @param batch Batch variable (column name) comprising individual batch or lot IDs (numeric
+#' or string) (required).
 #' @param validation Validation dummy variable (column name) (optional).
 #' @param xname Label for the x-axis (optional).
 #' @param yname Label for the y-axis (optional).
@@ -31,7 +33,7 @@
 #'
 #' @export step1_plot_desc
 
-step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
+step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL, batch = NULL, validation = NULL,
                              xname = NULL, yname = NULL, xlim = NULL, ylim = NULL){
 
   if (is.null(K) & is.null(C))
@@ -60,7 +62,9 @@ step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL, validation = NU
     names(shape_types) <- c("Fit", "Validation")
   }
 
-
+  if(!is.null(batch)){
+    dat$batch = dat[, batch] }
+    
   mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element_rect(fill = "white"),
                             legend.key = element_rect(fill = "white"), legend.key.width = unit(2,"cm"),
                             axis.text = element_text(size = 13), axis.title = element_text(size = 13),
@@ -77,6 +81,9 @@ step1_plot_desc <- function (data, y, .time, K = NULL, C = NULL, validation = NU
    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    mytheme +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
+
+    if(!is.null(dat$batch)){            # Panels for individual batches if present in the data
+     plot = plot + facet_wrap(~batch) }
 
   return(plot)
 
