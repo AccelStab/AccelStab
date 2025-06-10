@@ -46,16 +46,17 @@ step1_plot_diagnostic <- function(step1_down_object, bins = 7, residuals = "clas
 
   validation = step1_down_object$user_parameters$validation
 
+  dat$batcheff = 0
+  
   if(!is.null(validation)){
  val_dat <- dat[dat$validation == "Validation",] ## Selects only validation rows
  dat <- dat[dat$validation == "Fit",] ## Selects only non-validation rows
-
-  }
+                       }
 
   dat$residuals <- summary(step1_down_object$fit)$residuals
   #dat$y = dat[, step1_down_object$user_parameters$y]
   dat$predicted <- dat$y - dat$residuals
-
+  
 # Generate predictions and residuals for validation data if present and append to data used in model fitting
 if(!is.null(validation)){
      Kref = mean(dat$K)
@@ -65,18 +66,35 @@ if(!is.null(validation)){
      if(step1_down_object$user_parameters$zero_order == FALSE) {
      k3 = step1_down_object$fit$par$k3 }
 
+     # If validation data contians batches, also predict expected batch effects
+     if(!is.null(step1_down_object$user_parameters$batch)) {
+       if(step1_down_object$user_parameters$zero_order == TRUE){
+               n.from = 4}else{n.from=5}
+       n.fixeffs =  length(levels(step1_down_object$data$batch)) - 1
+       batchcoding = data.frame(
+       batch = c(levels(step1_down_object$data$batch)),
+       coding = contrasts(step1_down_object$data$batch),
+       t(coef(step1_down_object $fit)[n.from:(n.from+n.fixeffs-1)]))
+       for( j in 1:n.fixeffs){
+                eff <- c(batchcoding[, (j + 1)]) * c(batchcoding[, j + (1 + n.fixeffs) ])
+                if (j == 1){   effs = eff
+ 	              }else{effs = data.frame(cbind(effs, eff)) }  }
+       batchcoding$totaleff = rowSums(effs[,1:n.fixeffs])
+       val_dat$batcheff = batchcoding$totaleff[match(val_dat$batch, batchcoding$batch)]
+                                                              } else {val_dat$batcheff = 0 }
+  
      if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == TRUE) {     ## Model type 1: reparameterisation and k3 = 0
      val_degrad = val_dat$time * exp(k1 - k2/val_dat$K + k2/Kref)
-     val_predicted = c0 - c0 * val_degrad
+     val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad
      } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == TRUE){  ## Model type 2: no reparameterisation and k3 = 0
      val_degrad = val_dat$time * exp(k1 - k2 / val_dat$K)
-     val_predicted = c0 - c0 * val_degrad
+     val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad
      } else if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 3: reparameterisation and k3 is not zero
      val_degrad = 1 - ((1 - k3) * (1/(1 - k3) - val_dat$time * exp(k1 - k2 / val_dat$K + k2 / Kref)))^(1/(1-k3))
-     val_predicted = c0 - c0 * val_degrad
+     val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad
      } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 4: no reparameterisation and k3 is not 0
      val_degrad = 1 - ((1 - k3) * (1/(1 - k3) - val_dat$time * exp(k1 - k2 / val_dat$K)))^(1/(1-k3))
-     val_predicted = c0 - c0 * val_degrad                    }
+     val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad                   }
 
      val_residuals = val_dat$y - val_predicted
 
@@ -157,7 +175,6 @@ if(!is.null(validation)){
     title_addition <- "Standardized "
 
   }
-
 
   # Histogram plot (excludes validation if present)
    if(!is.null(validation)) {
