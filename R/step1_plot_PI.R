@@ -80,7 +80,7 @@ step1_plot_PI <- function (step1_down_object, xname = NULL, yname = NULL,
     {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
     theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
 
-  if(!is.null(pred$batch)){                    # Panels for individual batches if present in the model
+  if(!is.null(step1_down_object$user_parameters$batch)){   # Panels for individual batches if present in the model
      plot = plot + facet_wrap(~batch) }
   
   return(plot)
