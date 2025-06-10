@@ -51,7 +51,7 @@ step1_plot_T <- function (step1_down_object, focus_T = NULL, xname = NULL, yname
   if (is.null(yname))
     yname = "Response Variable"
 
-  if(!(focus_T %in% step1_down_object$prediction$Celsius)){
+  if(!(focus_T %in% step1_down_object$prediction$Celsius) & is.null(step1_down_object$user_parameters$batch)){
     step1_down_object_temp <- step1_down(
       data = step1_down_object$user_parameters$data,
       y = step1_down_object$user_parameters$y,
@@ -66,12 +66,31 @@ step1_plot_T <- function (step1_down_object, focus_T = NULL, xname = NULL, yname
       confidence_interval = step1_down_object$user_parameters$confidence_interval,
       by = step1_down_object$user_parameters$by,
       reparameterisation = step1_down_object$user_parameters$reparameterisation,
-      zero_order = step1_down_object$user_parameters$zero_order
-      )
+      zero_order = step1_down_object$user_parameters$zero_order)
+    dat = step1_down_object_temp$data
+    pred = step1_down_object_temp$prediction
+    confidence_interval = step1_down_object_temp$user_parameters$confidence_interval} else 
+    if(!(focus_T %in% step1_down_object$prediction$Celsius) & !is.null(step1_down_object$user_parameters$batch)){
+    step1_down_object_temp <- step1_down_batch(
+      data = step1_down_object$user_parameters$data,
+      y = step1_down_object$user_parameters$y,
+      .time = step1_down_object$user_parameters$.time,
+      K = step1_down_object$user_parameters$K,
+      C = step1_down_object$user_parameters$C,
+      validation = step1_down_object$user_parameters$validation,
+      draw = step1_down_object$user_parameters$draw,
+      parms = step1_down_object$user_parameters$parms,
+      temp_pred_C = c(step1_down_object$user_parameters$temp_pred_C,focus_T),
+      max_time_pred = step1_down_object$user_parameters$max_time_pred,
+      confidence_interval = step1_down_object$user_parameters$confidence_interval,
+      by = step1_down_object$user_parameters$by,
+      reparameterisation = step1_down_object$user_parameters$reparameterisation,
+      zero_order = step1_down_object$user_parameters$zero_order,
+      batch = step1_down_object$user_parameters$batch)
     dat = step1_down_object_temp$data
     pred = step1_down_object_temp$prediction
     confidence_interval = step1_down_object_temp$user_parameters$confidence_interval
-  }else{
+    }else{
     dat = step1_down_object$data
     pred = step1_down_object$prediction
     confidence_interval = step1_down_object$user_parameters$confidence_interval
@@ -101,7 +120,7 @@ step1_plot_T <- function (step1_down_object, focus_T = NULL, xname = NULL, yname
   colour_t <- scales::hue_pal()(length(unique(pred$Celsius)))
   names(colour_t) <- as.character(unique(pred$Celsius))
 
-  plot = ggplot() +
+  plot = ggplot(data = dat, aes(fill=NA)) +
    labs( x = xname, y = yname) +
    {if(!is.null(ylim)& is.null(xlim))coord_cartesian(ylim = ylim)} +
    {if(is.null(ylim)& !is.null(xlim))coord_cartesian(xlim = xlim)} +
@@ -120,6 +139,9 @@ step1_plot_T <- function (step1_down_object, focus_T = NULL, xname = NULL, yname
    scale_fill_manual(name = NULL, values = colour_t) +
    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
+
+    if(!is.null(step1_down_object$user_parameters$batch)){            # Panels for individual batches if present in the model
+     plot = plot + facet_wrap(~batch) }
 
   return(plot)
 }
