@@ -6,9 +6,9 @@
 #' accelerated stability and batch data that has been stored in an R data frame. Batch
 #' effects are provided by including batch as an independent variable affecting the
 #' response variable. Default factor coding for the batch variable is treatment coding
-#' where each batch level is compared to the reference level, but other coding schemas using
-#' contrasts() may be set and will be recognised. Additionally, predictions of the mean
-#' at each tested temperature and for each batch are returned, including associated
+#' where each batch level is compared to the reference level, but other factor coding 
+#' schemes set via contrasts() are also recognised. Additionally, predictions of the mean
+#' at each tested temperature for each batch are returned, including associated
 #' confidence and prediction intervals, which can be subsequently visualised with
 #' step1_plot_pred(), step1_plot_CI(), step1_plot_PI() and step1_plot_T(). Kinetic
 #' parameters (k1, k2 and, if used, k3) are retained in the model even if one or more of
@@ -69,19 +69,20 @@
 #'
 #' @export step1_down
 
-step1_down_batch <- function (data, y, .time, batch, K = NULL, C = NULL, validation = NULL,
-                        draw = 10000, parms = NULL, temp_pred_C = NULL,
-                        max_time_pred = NULL, confidence_interval = 0.95, by = 101,
-                        reparameterisation = FALSE, zero_order = FALSE, ...){
+step1_down_batch <- function (data, y, .time, K = NULL, C = NULL, batch = NULL,
+			validation = NULL, draw = 10000, parms = NULL,
+			temp_pred_C = NULL, max_time_pred = NULL,
+			confidence_interval = 0.95, by = 101, reparameterisation = FALSE,
+			zero_order = FALSE, ...){
 
- if (is.null(batch))
-    stop("Select the batch or lot variable")
-
- if (is.null(draw))
-    stop("The number entered for draw must be a positive integer")
-	
   if (is.null(K) & is.null(C))
     stop("Select the temperature variable in Kelvin or Celsius")
+
+  if (is.null(batch))
+    stop("Select a batch or lot variable")
+
+  if (is.null(draw))
+    stop("The number entered for draw must be a positive integer")
 
   if (!is.null(parms) & !is.list(parms))
     stop("The starting values for parameters must be a list, or keep as NULL")
