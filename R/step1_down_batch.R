@@ -19,10 +19,10 @@
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
 #'  (required).
 #' @param .time Time variable contained within data (required).
-#' @param batch Batch variable (column name) comprising individual batch or lot IDs (numeric
-#' or string) (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
+#' @param batch Batch variable (column name) comprising individual batch or lot IDs (numeric
+#' or string) (required).
 #' @param validation Validation dummy variable, the column must contain only
 #'  1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).
 #' @param draw Number of simulations used to estimate confidence intervals.
