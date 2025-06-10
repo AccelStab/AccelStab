@@ -89,7 +89,8 @@ if(!is.null(validation)){
 # Other types of residuals for fitted data
   title_addition = ""
 
-  if (residuals == "studentized") {
+  if (residuals == "studentized" & is.null(step1_down_object$user_parameters$batch)) {   
+                                      # Only attempt studentized residuals if batch isn't present in the model
     # Initialize a vector to store studentized residuals
     studentized_residuals <- numeric(nrow(dat))
 
@@ -174,7 +175,8 @@ if(!is.null(validation)){
                   linewidth = 1,
                   alpha = 0.6) + ggtitle (paste0(title_addition,"Residuals Histogram")) + xlab(paste0(title_addition,"Residuals")) + ylab("Density") +
     mytheme
-
+  if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
+      res_histo =  res_histo + facet_wrap(~batch) }
 
    # Observed vs predicted (includes validation points if present)
   obs_pred = ggplot() + geom_point(data = dat, mapping = aes(x = predicted, y = y, colour = Celsius, shape = validation)) +
@@ -184,7 +186,8 @@ if(!is.null(validation)){
     mytheme +
    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
-
+  if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
+      obs_pred =  obs_pred + facet_wrap(~batch) }
 
     # Residuals vs predicted (includes validation points if present)
   res_pred = ggplot() + geom_point(data = dat, mapping = aes(x = predicted, y = residuals, colour = Celsius, shape = validation)) +
@@ -194,7 +197,8 @@ if(!is.null(validation)){
     mytheme +
    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
-
+  if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
+      res_pred =  res_pred + facet_wrap(~batch) }
 
    # QQ plot (excludes validation points if present)
   if(!is.null(validation)){
@@ -203,13 +207,16 @@ if(!is.null(validation)){
   geom_point(data = cbind(validation = dat[dat$validation == "Fit",]$validation, Celsius = dat[dat$validation == "Fit",]$Celsius, as.data.frame(stats::qqnorm(dat[dat$validation == "Fit",]$residuals, plot.it = FALSE))), aes(x = x, y = y, colour = Celsius)) +
   ggtitle ("Q-Q Plot") + xlab("Theoretical Quantiles") + ylab("Sample Quantiles")+
   mytheme
+      if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
+      qqplot =  qqplot + facet_wrap(~batch) }
   } else {
   qqplot <- ggplot() +
   stat_qq_line(data = dat, aes(sample = residuals)) +
   geom_point(data = cbind(Celsius = dat$Celsius, as.data.frame(stats::qqnorm(dat$residuals, plot.it = FALSE))), aes(x = x, y = y, colour = Celsius)) +
   ggtitle ("Q-Q Plot") + xlab("Theoretical Quantiles") + ylab("Sample Quantiles")+
   mytheme  }
-
+     if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
+      qqplot =  qqplot + facet_wrap(~batch) }
 
    # Plot showing residuals by time (includes validation points if present)
   res_time = ggplot() + geom_point(data = dat, mapping = aes(x = time, y = residuals, colour = Celsius, shape = validation)) +
@@ -219,7 +226,8 @@ if(!is.null(validation)){
     mytheme +
    {if(!is.null(validation))scale_shape_manual(values = shape_types, name = NULL)} +
    theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
-
+     if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
+      res_time =  res_time + facet_wrap(~batch) }
 
   results = list(res_histo, qqplot, obs_pred, res_pred, res_time)
   names(results) = c("Residuals_Histogram","Q_Q_Plot", "Observed_V_Predicted","Residuals_V_Predicted","Residuals_By_Time")
