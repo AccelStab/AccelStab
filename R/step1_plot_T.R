@@ -5,6 +5,7 @@
 #'
 #' @details Plot the stability data and visualise the predictions focusing on one
 #'  chosen temperature with confidence and prediction intervals.
+#'  If present, batches are shown in separate panels.
 #'
 #' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param focus_T Selected temperature to highlight on the plot.
