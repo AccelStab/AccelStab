@@ -26,7 +26,7 @@
 #' @param validation Validation dummy variable, the column must contain only
 #'  1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).
 #' @param draw Number of simulations used to estimate confidence intervals.
-#' @param parms Starting values for the parameters as a list - k1, k2, k3, and c0.
+#' @param parms Starting values for the parameters as a list - k1, k2, k3, c0, and batch effects (b1, b2, b3 etc.).
 #' @param temp_pred_C Integer or numeric value to predict the response for a
 #'  given temperature (in Celsius).
 #' @param max_time_pred Maximum time to predict the response variable.
