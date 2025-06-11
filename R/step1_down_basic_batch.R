@@ -1,24 +1,30 @@
-#' @title Basic version Step1 Down Model
+#' @title Basic Version Step1 Down Model With Batch Effects
 #'
-#' @description Quickly fit the one-step Šesták–Berggren kinetic model.
+#' @description Quickly fit the one-step Šesták–Berggren kinetic model including batch effects.
 #'
 #' @details Fit the one-step Šesták–Berggren kinetic (non-linear) model using
-#' accelerated stability data that has been stored in an R data frame. Only the model
-#' fit object is returned and a summary of the model fit is printed in the console, allowing
-#' for more rapid testing than step1_down(). Kinetic parameters (k1, k2 and, if used, k3) are
-#' retained in the model even if one or more of these parameters turn out to be non-significant.
-#' Further arguments relating to model fitting, such as setting lower bounds for one or more model
+#' accelerated stability and batch data that has been stored in an R data frame. Batch
+#' effects are provided by including batch as an independent variable affecting the
+#' response variable. Default factor coding for the batch variable is treatment coding
+#' where each batch level is compared to the reference level, but other factor coding
+#' schemes set via contrasts() are also recognised. Only the model fit object is returned and
+#' a summary of the model fit is printed in the console, allowing for more rapid testing
+#' than step1_down_batch(). Kinetic parameters (k1, k2 and, if used, k3) are retained in the
+#' model even if one or more of these parameters turn out to be non-significant. Further
+#' arguments relating to model fitting, such as setting lower bounds for one or more model
 #' parameters, may be passed.
 #'
-#' @param data Dataframe containing accelerated stability data (required).
+#' @param data Dataframe containing accelerated stability data and batches (required).
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
 #'  (required).
 #' @param .time Time variable contained within data (required).
 #' @param K Kelvin variable (numeric or column name) (optional).
 #' @param C Celsius variable (numeric or column name) (optional).
+#' @param batch Batch variable (column name) comprising individual batch or lot IDs (numeric
+#' or string) (required).
 #' @param validation Validation dummy variable, the column must contain only
 #'  1s and 0s, 1 for validation data and 0 for fit data. (column name) (optional).
-#' @param parms Starting values for the parameters as a list - k1, k2, k3, and c0.
+#' @param parms Starting values for the parameters as a list - k1, k2, k3, c0, and batch effects (b1, b2, b3 etc.).
 #' @param reparameterisation Use alternative parameterisation of the one-step
 #'  model which aims to reduce correlation between k1 and k2.
 #' @param zero_order Set kinetic order, k3, to zero (straight lines).
@@ -26,36 +32,32 @@
 #'
 #' @return The fit object
 #'
-#' @examples #load antigenicity and potency data.
-#' data(antigenicity)
-#' data(potency)
+#' @examples # Create a dataset containing 3 batches based on antigenicity
+#' data = data.frame(time = rep(antigenicity$time, 3),
+#' Celsius = rep(antigenicity$Celsius, 3),
+#' BatchID = rep(c("BatchA", "BatchB", "BatchC"), each = nrow(antigenicity)),
+#' validA = rep(antigenicity$validA, 3),
+#' conc = c(antigenicity$conc,
+#' rnorm(n = nrow(antigenicity), mean = antigenicity$conc - 10, sd = 3),
+#' rnorm(n = nrow(antigenicity), mean = antigenicity$conc + 10, sd = 3)))
+#' 
+#' # Fit a model excluding validation but including effects for the variable "BatchID"
+#' fit1 = step1_down_basic_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID", y = "conc",
+#' 		validation = "validA")
 #'
-#' #Use of the step1_down_basic function with C column defined.
-#' fit1 <- step1_down_basic(data = antigenicity, y = "conc", .time = "time", C = "Celsius")
-#'
-#' #Basic use of the step1_down_basic function with K column defined & Validation data segmented out.
-#' fit2 <- step1_down_basic(data = antigenicity, y = "conc", .time = "time", K = "K",
-#' validation = "validA")
-#'
-#' #When zero_order = FALSE, the output suggests using zero_order = TRUE for Potency dataset.
-#' fit3 <- step1_down_basic(data = potency, y = "Potency", .time = "Time",C = "Celsius",
-#'   reparameterisation = FALSE, zero_order = TRUE)
-#'
-#' #reparameterisation is TRUE.
-#' fit4 <- step1_down_basic(data = antigenicity, y = "conc", .time = "time",C = "Celsius",
-#'   reparameterisation = TRUE)
-#'
-#' #Use a custom lower bound for k1 (default is 0).
-#' fit5 <- step1_down_basic(data = potency, y = "Potency", .time = "Time", C = "Celsius",
-#'   reparameterisation = TRUE, zero_order = TRUE, lower = c(-Inf, 0, 0))
+#' # Specify the type of factor coding for the batch variable, e.g., deviation coding, and a fit model
+#' data$BatchID2 = factor(data$BatchID); contrasts(data$BatchID2) = contr.sum(3)
+#' fit2 = step1_down_basic_batch(data = data, .time = "time", C = "Celsius", batch = "BatchID2", y = "conc",
+#' 		validation = "validA")
 #'
 #' @importFrom stats coef vcov runif complete.cases
 #' @importFrom minpack.lm nls.lm
 #'
 #' @export step1_down_basic
 
-step1_down_basic <- function (data, y, .time, K = NULL, C = NULL, validation = NULL,
-                        parms = NULL, reparameterisation = FALSE, zero_order = FALSE, ...){
+step1_down_basic_batch <- function (data, y, .time, K = NULL, C = NULL, batch = NULL,
+			validation = NULL, parms = NULL, reparameterisation = FALSE,
+			zero_order = FALSE, ...){
 
   if (is.null(K) & is.null(C))
     stop("Select the temperature variable in Kelvin or Celsius")
@@ -63,16 +65,19 @@ step1_down_basic <- function (data, y, .time, K = NULL, C = NULL, validation = N
   if (!is.null(parms) & !is.list(parms))
     stop("The starting values for parameters must be a list, or keep as NULL")
 
+  if (is.null(batch))
+    stop("Select a batch or lot variable")
+	
   if (!is.null(validation))
     if (!all(data[,validation] %in% c(0,1)))
       stop("Validation column must contain 1s and 0s only")
 
   user_parameters <- list(
-    data = data, y = y, .time = .time, K = K, C = C, validation = validation,
+    data = data, y = y, .time = .time, batch = batch, K = K, C = C, validation = validation,
     parms = parms, reparameterisation = reparameterisation, zero_order = zero_order)
 
   ## Additional arguments in the call will be passed to model fitting with minpack.lm
-  minpack_args = list(...)                    ##
+  minpack_args = list(...)
 
   ## Temperature: both C and K are provided
   if(!is.null(C) & !is.null(K)) {
@@ -87,21 +92,24 @@ step1_down_basic <- function (data, y, .time, K = NULL, C = NULL, validation = N
   }
 
   ## Temperature: only C or only K is provided
-  if (!is.null(C) & is.null(K)) {           ##
-   K = 'K'                                  ##
-   data[, K] = data[, C] + 273.15  }        ##
-  else if (!is.null(K) & is.null(C)) {      ##
-   C = 'C'                                  ##
-   data[, C] = data[, K] - 273.15 }         ##
+  if (!is.null(C) & is.null(K)) {
+   K = 'K'
+   data[, K] = data[, C] + 273.15  }
+  else if (!is.null(K) & is.null(C)) {
+   C = 'C'
+   data[, C] = data[, K] - 273.15 }
 
-  data <- data[complete.cases(data[, c(C,K,y,.time)]), ]
+  data <- data[complete.cases(data[, c(C,K,y,.time, batch)]), ]
 
   dat = data
-  dat$K = dat[, K]                         ##
+  dat$K = dat[, K]
   Kref = mean(dat$K)
   dat$Celsius = as.factor(dat[, C])
   dat$time = dat[, .time]
   dat$y = dat[, y]
+  if (is.factor(dat[, batch])) {
+			dat$batch = dat[, batch] } else {
+			dat$batch = factor(dat[, batch])}
   if(!is.null(validation)){
     dat$validation = ifelse(dat[,validation] == 0, "Fit", "Validation")
     if(validation != "validation"){
@@ -114,12 +122,20 @@ step1_down_basic <- function (data, y, .time, K = NULL, C = NULL, validation = N
   if(y != "y"){
     dat <- dat[, !names(dat) %in% c(y)]
   }
-
+ if (batch != "batch") {
+    dat <- dat[, !names(dat) %in% c(batch)]
+                         }
   dat_full <- dat
   if(!is.null(validation)){
     dat <- dat[dat$validation == "Fit",]
   }
 
+  batches = unique(dat$batch)
+  no_batches <- length(batches)
+  no_fixed_effect <- no_batches - 1
+  batch_names = as.data.frame(levels(dat$batch))
+  batch_coding = as.data.frame(contrasts(dat$batch))
+	
   if(is.null(parms)){
     sorted_data <- dat[order(dat$time), ]
 
@@ -135,50 +151,71 @@ step1_down_basic <- function (data, y, .time, K = NULL, C = NULL, validation = N
 
 ## Model type 1 - reparameterisation and k3 = 0
   if(reparameterisation & zero_order){
-
-## Print a message informing lower bounds = 0 may not be suitable with the reparameterised version
+## Print a message informing lower bounds = 0 may not be suitable with the reparamerised version
 cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n")
 
-   MyFctNL = function(parms) { # Make function
+  MyFctNL = function(parms) { # Make function
       k1 = parms$k1
       k2 = parms$k2
       c0 = parms$c0
-      Model = c0 - c0 * dat$time * exp(k1 - k2/dat$K + k2/Kref)
-      residual = dat$y - Model
+       
+      for (i in 1:no_fixed_effect) {
+        var_name <- paste0("b", i)
+        assign(var_name, as.numeric(parms[i + 3]))
+                                    }
+      
+      degrad = dat$time * exp(k1 - k2/dat$K + k2/Kref)
+      effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")
+      test = rep("", no_batches)
+      
+      for (i in 1: no_batches-1) {
+        test[i] = paste0("ifelse(dat$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
+        for (j in no_batches: no_batches) {
+        test[j] = gsub("bn", j, effs)
+                                          }
+                                 }
+
+      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+    
+      residual = dat$y - eval(parse(text = test))
       return(residual)
-    }
+                                  }
 
-  if (!"fn" %in% names(minpack_args)) {	##
-    minpack_args$fn =  MyFctNL    }     ##
+  if (!"fn" %in% names(minpack_args)) {
+    minpack_args$fn =  MyFctNL    }
 
-    # Fit model :
+    # Fit model:
     if (!is.null(parms)) {
-     minpack_args$par =  parms                          ##
-    if (!"lower" %in% names(minpack_args)) 	{	##
-    minpack_args$lower =  rep(0, length(parms))   }     ##
-
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+      minpack_args$par =  parms
+    if (!"lower" %in% names(minpack_args)) 	{
+    minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
+	if(length(minpack_args$par) != length(minpack_args$lower))
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
   fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
     else {
-  repeat {
+      repeat {
         suppressWarnings(rm(fit))
 
-   parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1,1000, 20000), c0 = c0_initial)
+        parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1, 1000, 20000), c0 = c0_initial)
 
-   minpack_args$par = parms
+        for (i in 1:no_fixed_effect) {
+          var_name <- paste0("b", i)
+          parms[[var_name]] <- rnorm(1, 0, 2)
+        }
 
-  if (!"lower" %in% names(minpack_args)) 	{	##
-	minpack_args$lower =  rep(0, length( parms ))   }     ##
+minpack_args$par = parms
 
-	if(length(minpack_args$par) != length(minpack_args$lower))     ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+if (!"lower" %in% names(minpack_args)) 	{
+	minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
 
-	fit = suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
+	if(length(minpack_args$par) != length(minpack_args$lower))
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
-        fit <- tryCatch({
+  fit = suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
+
+   fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
         },
         error = function(e){"error"},
@@ -195,31 +232,48 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
         }
       }
       fit = do.call(minpack.lm::nls.lm, minpack_args)
-    }
+ }
 
 ## Model type 2 - no reparameterisation and k3 = 0
   }else if(!reparameterisation & zero_order){
-    MyFctNL = function(parms) { # make function
+  MyFctNL = function(parms) { # Make function
       k1 = parms$k1
       k2 = parms$k2
       c0 = parms$c0
+       
+      for (i in 1:no_fixed_effect) {
+        var_name <- paste0("b", i)
+        assign(var_name, as.numeric(parms[i + 3]))
+                                    }
+      
+      degrad = dat$time * exp(k1 - k2/dat$K)
 
-      Model = c0 - c0 * dat$time * exp(k1 - k2 / dat$K)
-      residual = dat$y - Model
+      effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")
+      test = rep("", no_batches)
+      
+      for (i in 1: no_batches-1) {
+        test[i] = paste0("ifelse(dat$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
+        for (j in no_batches: no_batches) {
+        test[j] = gsub("bn", j, effs)
+                                          }
+                                 }
+
+      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+    
+      residual = dat$y - eval(parse(text = test))
       return(residual)
-    }
+                                  }
 
-   if (!"fn" %in% names(minpack_args)) 	{	##
-    minpack_args$fn =  MyFctNL    }             ##
+  if (!"fn" %in% names(minpack_args)) 	{
+    minpack_args$fn =  MyFctNL    }
 
-   ## fit model
-    if (!is.null(parms)) { #
-    minpack_args$par =  parms                       ##
-    if (!"lower" %in% names(minpack_args)) 	{       ##
-    minpack_args$lower =  rep(0, length(parms))   } ##
-
-	if(length(minpack_args$par) != length(minpack_args$lower))                ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+    # Fit model
+    if (!is.null(parms)) {
+    minpack_args$par =  parms
+    if (!"lower" %in% names(minpack_args)) 	{
+    minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))   }
+	if(length(minpack_args$par) != length(minpack_args$lower))
+	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
@@ -227,17 +281,22 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
       repeat {
         suppressWarnings(rm(fit))
 
-  parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1,1000, 20000), c0 = c0_initial)
+        parms = list(k1 = stats::runif(1, 0, 40), k2 = stats::runif(1, 1000, 20000), c0 = c0_initial)
 
-  minpack_args$par = parms ##
+        for (i in 1:no_fixed_effect) {
+          var_name <- paste0("b", i)
+          parms[[var_name]] <- rnorm(1, 0, 2)
+        }
 
-if (!"lower" %in% names(minpack_args)) 	{	##
-	    minpack_args$lower =  rep(0, length( parms ))   }   ##
+  minpack_args$par = parms
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+if (!"lower" %in% names(minpack_args)) 	{
+	  minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
 
-  fit <- tryCatch({
+	if(length(minpack_args$par) != length(minpack_args$lower))
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
+
+ fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
         },
         error = function(e){"error"},
@@ -255,11 +314,11 @@ if (!"lower" %in% names(minpack_args)) 	{	##
       }
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
-
+	  
 ## Model type 3 - reparameterisation and k3 is not zero
   }else if(reparameterisation & !zero_order){
 
-  ## Print a message informing lower bounds = 0 may not be suitable with the reparameterised version
+  ## Print a message informing lower bounds = 0 may not be suitable with the reparamerised version
   cat("The alternative parameterisation of the one-step model was used. Note that the lower bounds for all parameters are set to 0 unless other lower bounds are specified in step1_down() or step1_down_basic().\n\n")
 
    MyFctNL = function(parms) {
@@ -267,38 +326,61 @@ if (!"lower" %in% names(minpack_args)) 	{	##
       k2 = parms$k2
       k3 = parms$k3
       c0 = parms$c0
-      Model = c0 - c0 * (1 - ((1 - k3) * (1/(1 - k3) - dat$time *
-                                            exp(k1 - k2/dat$K + k2/Kref)))^(1/(1 - k3)))
-      residual = dat$y - Model
+
+      for (i in 1:no_fixed_effect) {
+        var_name <- paste0("b", i)
+        assign(var_name, as.numeric(parms[i + 4]))
+                                    }
+      
+      degrad = (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2/dat$K + k2/Kref)))^(1/(1 - k3)))
+      
+      effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad"       )
+
+      test = rep("", no_batches)
+            for (i in 1: no_batches-1) {
+              test[i] = paste0("ifelse(dat$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
+                 for (j in no_batches: no_batches) {
+                     test[j] = gsub("bn", j, effs)
+                                                   }
+                                        }
+
+      test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+      residual = dat$y - eval(parse(text = test))
       return(residual)
     }
 
-  if (!"fn" %in% names(minpack_args)) 	{	##
-    minpack_args$fn =  MyFctNL    }             ##
+  if (!"fn" %in% names(minpack_args)) 	{
+    minpack_args$fn =  MyFctNL    }
 
-  if (!is.null(parms)) { # Fit the model
-        minpack_args$par =  parms               ##
-  if (!"lower" %in% names(minpack_args)) 	{	##
-    minpack_args$lower =  rep(0, length(parms))   }     ##
+  # Fit model:
+  if (!is.null(parms)) {
+        minpack_args$par =  parms
+  if (!"lower" %in% names(minpack_args)) 	{
+    minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))   }
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	if(length(minpack_args$par) != length(minpack_args$lower))
+        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
-    fit = do.call(minpack.lm::nls.lm, minpack_args)
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
     else {
       repeat {
         suppressWarnings(rm(fit))
 
-  parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1,1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
+        parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1, 1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
+
+      for (i in 1:no_fixed_effect) {
+          var_name <- paste0("b", i)
+          parms[[var_name]] <- rnorm(1, 0, 2)
+                                    }
 
   minpack_args$par = parms
 
-  if (!"lower" %in% names(minpack_args)) 	{	##
-	    minpack_args$lower =  rep(0, length( parms ))   }     ##
+  if (!"lower" %in% names(minpack_args)) 	{
+	    minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))  }
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+	if(length(minpack_args$par) != length(minpack_args$lower))
+        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
    fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
@@ -317,54 +399,70 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         }
       }
       fit = do.call(minpack.lm::nls.lm, minpack_args)
-    }
+ }
 
    if (coef(fit)[3] == 0){cat(paste("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE","The model will continue with k3 = 0, so degradation is linear over time"," "," ", sep = "\n"))
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(coef(fit)[3],4),". We suggest considering option zero_order = TRUE"))}
 
 ## Model type 4 - no reparameterisation and k3 is not 0
   }else if(!reparameterisation & !zero_order){
-    MyFctNL = function(parms) {
+  MyFctNL = function(parms) {
       k1 = parms$k1
       k2 = parms$k2
       k3 = parms$k3
       c0 = parms$c0
 
-      test = c0 - c0 * (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2 / dat$K)))^(1/(1-k3)))
+      for (i in 1:no_fixed_effect) {
+        var_name <- paste0("b", i)
+        assign(var_name, as.numeric(parms[i + 4]))
+                                    }
+     degrad = (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2 / dat$K)))^(1/(1-k3)))
+     effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")
+     test = rep("", no_batches)
+     for (i in 1: no_batches-1) {
+        test[i] = paste0("ifelse(dat$batch == batch_names[", gsub("bn", i, paste0("bn, 1],", effs)),",")
+        for (j in no_batches: no_batches) {
+            test[j] = gsub("bn", j, effs)
+                                           }
+                                 }
+     test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
+     residual = dat$y - eval(parse(text = test))
+    return(residual)
+                            }
 
-      residual = dat$y - test
-      return(residual)
-    }
+  if (!"fn" %in% names(minpack_args)) 	{
+    minpack_args$fn =  MyFctNL    }
 
-  if (!"fn" %in% names(minpack_args)) 	{	##
-    minpack_args$fn =  MyFctNL    }             ##
+# Fitting the model:
+    if (!is.null(parms)) {
+    minpack_args$par =  parms
+  if (!"lower" %in% names(minpack_args)) 	{
+    minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))    }
+	if(length(minpack_args$par) != length(minpack_args$lower))
+        stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
-    if (!is.null(parms)) { # Fitting the model
-    minpack_args$par =  parms                   ##
-
-    if (!"lower" %in% names(minpack_args)) 	{	##
-    minpack_args$lower =  rep(0, length(parms))   }   ##
-
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
-
-  fit = do.call(minpack.lm::nls.lm, minpack_args)
+      fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
     else {
       repeat {
         suppressWarnings(rm(fit))
 
- parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1,1000, 20000), k3 = stats::runif(1,0, 11), c0 = c0_initial)
+        parms = list(k1 = stats::runif(1, 0, 60), k2 = stats::runif(1, 1000, 20000), k3 = stats::runif(1, 0, 11), c0 = c0_initial)
+
+       for (i in 1:no_fixed_effect) {
+          var_name <- paste0("b", i)
+          parms[[var_name]] <- rnorm(1, 0, 2)
+        }
 
   minpack_args$par = parms
 
-  if (!"lower" %in% names(minpack_args)) 	{	##
-	    minpack_args$lower =  rep(0, length( parms ))   } ##
+  if (!"lower" %in% names(minpack_args)) 	{
+          minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))    }
 
-	if(length(minpack_args$par) != length(minpack_args$lower))                             ##
-	stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")  ##
+  if(length(minpack_args$par) != length(minpack_args$lower))
+  stop("The number of parameters (",length(minpack_args$par),") does not match the number of specified lower bounds (",length(minpack_args$lower),").")
 
-   fit <- tryCatch({
+ fit <- tryCatch({
           suppressWarnings(do.call(minpack.lm::nls.lm, minpack_args))
         },
         error = function(e){"error"},
@@ -380,15 +478,13 @@ if (!"lower" %in% names(minpack_args)) 	{	##
           break
         }
       }
-
       fit = do.call(minpack.lm::nls.lm, minpack_args)
     }
+
     if (coef(fit)[3] == 0){cat(paste("k3 is fitted to be exactly 0, we strongly suggest using option zero_order = TRUE","The model will continue with k3 = 0, so degradation is linear over time"," ", " ", sep = "\n"))
     }else if(confint(fit,'k3')[1] < 0 && confint(fit,'k3')[2] > 0){print(paste0("The 95% Wald Confidence Interval for k3 includes 0, k3 is estimated as ",signif(coef(fit)[3],4),". We suggest considering option zero_order = TRUE"))}
   }
 
   print(summary(fit))
-
   return(fit)
-
 }
