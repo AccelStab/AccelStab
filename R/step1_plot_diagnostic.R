@@ -66,7 +66,7 @@ if(!is.null(validation)){
      if(step1_down_object$user_parameters$zero_order == FALSE) {
      k3 = step1_down_object$fit$par$k3 }
 
-     # If validation data contians batches, also predict expected batch effects
+     # For validation containing batches, also predict expected batch effects
      if(!is.null(step1_down_object$user_parameters$batch)) {
        if(step1_down_object$user_parameters$zero_order == TRUE){
                n.from = 4}else{n.from=5}
