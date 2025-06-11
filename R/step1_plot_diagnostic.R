@@ -8,7 +8,7 @@
 #' Plots created are: Residuals Histogram, QQ Plot of Residuals, Observed Vs Predicted results, Residuals
 #'  Vs Predicted results and Residuals By Time.
 #'
-#' @param step1_down_object The fit object from the step1_down function (required).
+#' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param bins The number of bins in the Histogram plot (default 7).
 #' @param residuals The type of residuals to plot classic/studentized/standardized (default classic).
 #'
