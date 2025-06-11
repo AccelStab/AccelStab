@@ -14,7 +14,8 @@ step1_sample_mvt(
   draw,
   parms = NULL,
   reparameterisation = FALSE,
-  zero_order = FALSE
+  zero_order = FALSE,
+  ...
 )
 }
 \arguments{
