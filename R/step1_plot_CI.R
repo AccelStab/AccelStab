@@ -7,6 +7,7 @@
 #'  data and visualise the predictions with confidence intervals applied.
 #'  There is an option to view the confidence intervals as a ribbon. The
 #'  confidence interval value is chosen in the step1.down function.
+#'  If present, batches are shown in separate panels.
 #'
 #' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param xname Label for the x-axis (optional).
