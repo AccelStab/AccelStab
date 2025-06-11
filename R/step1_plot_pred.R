@@ -3,7 +3,7 @@
 #' @description Plot the stability data and visualise the predictions.
 #'
 #' @details Use the fit object from the step1.down function to plot the accelerated
-#'  stability data and visualise the predictions.
+#'  stability data and visualise the predictions. If present, batches are shown in separate panels.
 #'
 #' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param xname Label for the x-axis (optional).
