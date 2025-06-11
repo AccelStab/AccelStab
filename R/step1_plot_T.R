@@ -6,7 +6,7 @@
 #' @details Plot the stability data and visualise the predictions focusing on one
 #'  chosen temperature with confidence and prediction intervals.
 #'
-#' @param step1_down_object The fit object from the step1.down function (required).
+#' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param focus_T Selected temperature to highlight on the plot.
 #' @param xname Label for the x-axis (optional).
 #' @param yname Label for the y-axis (optional).
