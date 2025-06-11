@@ -5,7 +5,7 @@
 #' @details Use the fit object from the step1.down function to plot the accelerated
 #'  stability data and visualise the predictions.
 #'
-#' @param step1_down_object The fit object from the step1.down function (required).
+#' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param xname Label for the x-axis (optional).
 #' @param yname Label for the y-axis (optional).
 #' @param xlim x-axis limits (optional).
