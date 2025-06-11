@@ -6,7 +6,7 @@
 #' @details Use the fit object obtained from the step1.down function to plot the
 #'  data and visualise the predictions with confidence intervals applied.
 #'  There is an option to view the confidence intervals as a ribbon. The
-#'  confidence interval value is chosen in the step1.down function.
+#'  confidence interval value is chosen in the step1_down or step1_down_batch functions.
 #'  If present, batches are shown in separate panels.
 #'
 #' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
