@@ -2,11 +2,11 @@
 #'
 #' @description Generate residual diagnostic plots from a step1_down fit.
 #'
-#' @details Use the fit object obtained from the step1_down function to plot the
+#' @details Use the fit object obtained from the step1_down or step1_down_batch functions to plot the
 #' residual diagnostic plots, assess the quality of fit and search for anomalies.
 #' Change the type of Residuals assessed.
 #' Plots created are: Residuals Histogram, QQ Plot of Residuals, Observed Vs Predicted results, Residuals
-#'  Vs Predicted results and Residuals By Time.
+#'  Vs Predicted results and Residuals By Time. If present, batches are shown in separate panels.
 #'
 #' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param bins The number of bins in the Histogram plot (default 7).
@@ -84,22 +84,23 @@ if(!is.null(validation)){
                                                               } else {val_dat$batcheff = 0 }
   
      if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == TRUE) {     ## Model type 1: reparameterisation and k3 = 0
-     val_degrad = val_dat$time * exp(k1 - k2/val_dat$K + k2/Kref)
+     val_degrad = (val_dat$time * exp(k1 - k2/val_dat$K + k2/Kref))
      val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad
      } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == TRUE){  ## Model type 2: no reparameterisation and k3 = 0
-     val_degrad = val_dat$time * exp(k1 - k2 / val_dat$K)
+     val_degrad = (val_dat$time * exp(k1 - k2 / val_dat$K))
      val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad
      } else if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 3: reparameterisation and k3 is not zero
-     val_degrad = 1 - ((1 - k3) * (1/(1 - k3) - val_dat$time * exp(k1 - k2 / val_dat$K + k2 / Kref)))^(1/(1-k3))
+     val_degrad = (1 - ((1 - k3) * (1/(1 - k3) - val_dat$time * exp(k1 - k2 / val_dat$K + k2 / Kref)))^(1/(1-k3)))
      val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad
      } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 4: no reparameterisation and k3 is not 0
-     val_degrad = 1 - ((1 - k3) * (1/(1 - k3) - val_dat$time * exp(k1 - k2 / val_dat$K)))^(1/(1-k3))
+     val_degrad = (1 - ((1 - k3) * (1/(1 - k3) - val_dat$time * exp(k1 - k2 / val_dat$K)))^(1/(1-k3)))
      val_predicted = (c0 + val_dat$batcheff) - (c0 + val_dat$batcheff) * val_degrad                   }
 
      val_residuals = val_dat$y - val_predicted
 
      val_dat = data.frame(val_dat, residuals = val_residuals, predicted = val_predicted)
      dat = rbind(dat, val_dat)
+     contrasts(dat$batch) = contrasts(step1_down_object$data$batch) # Restore any custom factor coding to batch variable
 
     shape_types <- c(16,1)
     names(shape_types) <- c("Fit", "Validation")    }
@@ -107,8 +108,11 @@ if(!is.null(validation)){
 # Other types of residuals for fitted data
   title_addition = ""
 
+# Studentized residuals
+
+ # Studentized residuals when the original model lacked batch effects
   if (residuals == "studentized" & is.null(step1_down_object$user_parameters$batch)) {   
-                                      # Only attempt studentized residuals if batch isn't present in the model
+                                    
     # Initialize a vector to store studentized residuals
     studentized_residuals <- numeric(nrow(dat))
 
@@ -134,15 +138,103 @@ if(!is.null(validation)){
       # find the predicted value when fitted without the point
       k1 = coef(fit_excluded)["k1"]
       k2 = coef(fit_excluded)["k2"]
-      k3 = coef(fit_excluded)["k3"]
       c0 = coef(fit_excluded)["c0"]
-      if (step1_down_object$user_parameters$reparameterisation == TRUE){
+      
+   if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == TRUE) {     ## Model type 1: reparameterisation and k3 = 0
         Kref = mean(dat_excluded$K)
-        predicted_i = c0 - c0 * (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2/dat$K[i] + k2/Kref)))^(1/(1 - k3)))
+ 	degrad_i = (dat$time[i] * exp(k1 - k2/dat$K[i] + k2/Kref))
+        predicted_i = c0 - c0 * degrad_i
+   } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == TRUE){  ## Model type 2: no reparameterisation and k3 = 0
+       degrad_i = (dat$time[i] * exp(k1 - k2 / dat$K[i]))
+       predicted_i = c0 - c0 * degrad_i
+    } else if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 3: reparameterisation and k3 is not zero
+     Kref = mean(dat_excluded$K)
+     k3 = coef(fit_excluded)["k3"] 
+     degrad_i = (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2 / dat$K[i] + k2 / Kref)))^(1/(1-k3)))
+     predicted_i = c0 - c0 * degrad_i
+  } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 4: no reparameterisation and k3 is not 0
+     k3 = coef(fit_excluded)["k3"]
+     degrad_i = (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2 / dat$K[i])))^(1/(1-k3)))
+     predicted_i = c0 - c0 * degrad_i                   }
 
-        }else{
-          predicted_i = c0 - c0 * (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2 / dat$K[i])))^(1/(1-k3)))
+      # Calculate the residual for the excluded data point
+      residual_i <- dat$y[i] - predicted_i
+
+      # Calculate the standard error of the residual
+      se_residual <- sqrt(mean((summary(fit_excluded)$residuals)^2))
+
+      # Calculate the studentized residual
+      studentized_residuals[i] <- residual_i / se_residual
       }
+
+    # Store the studentized residuals in the data frame
+    dat$residuals <- studentized_residuals
+      title_addition <- "Studentized "
+ 
+# Studentized residuals when the original model included batch effects
+  }else if(residuals == "studentized" & !is.null(step1_down_object$user_parameters$batch)) {   
+
+ # Initialize a vector to store studentized residuals
+    studentized_residuals <- numeric(nrow(dat))
+
+    # Loop through each data point
+    for (i in seq_len(nrow(dat))) {
+ 
+     # Exclude the i-th data point
+      dat_excluded <- dat[-i, ]
+
+      # Re-fit the model without the i-th data point
+      sink(tempfile())
+      fit_excluded <- step1_down_basic_batch(
+        data = dat_excluded,
+        y = "y",
+        .time = "time",
+        #C = "Celsius",
+        K = "K",
+        batch = "batch",
+        parms = step1_down_object$user_parameters$parms,
+        reparameterisation = step1_down_object$user_parameters$reparameterisation,
+        zero_order = step1_down_object$user_parameters$zero_order
+      )
+      sink()
+
+      # find the predicted value when fitted without the point
+      k1 = coef(fit_excluded)["k1"]
+      k2 = coef(fit_excluded)["k2"]
+      c0 = coef(fit_excluded)["c0"]
+
+  if(step1_down_object$user_parameters$zero_order == TRUE){
+     n.from = 4 } else {
+     n.from = 5
+     k3 = coef(fit_excluded)["k3"] }    
+  n.fixeffs =  length(levels(step1_down_object$data$batch)) - 1
+       batchcoding = data.frame(
+       batch = c(levels(step1_down_object$data$batch)),
+       coding = contrasts(step1_down_object$data$batch),
+       t(coef(fit_excluded)[n.from:(n.from+n.fixeffs-1)]))
+       for( j in 1:n.fixeffs){
+                eff <- c(batchcoding[, (j + 1)]) * c(batchcoding[, j + (1 + n.fixeffs) ])
+                if (j == 1){   effs = eff
+ 	              }else{effs = data.frame(cbind(effs, eff)) }  }
+       batchcoding$totaleff = rowSums(effs[,1:n.fixeffs])
+       dat$batcheff = batchcoding$totaleff[match(dat$batch, batchcoding$batch)]
+	
+   if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == TRUE) {     ## Model type 1: reparameterisation and k3 = 0
+        Kref = mean(dat_excluded$K)
+ 	degrad_i = (dat$time[i] * exp(k1 - k2/dat$K[i] + k2/Kref))
+        predicted_i = (c0 + dat$batcheff[i]) - (c0 + dat$batcheff[i]) * degrad_i
+   } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == TRUE){  ## Model type 2: no reparameterisation and k3 = 0
+       degrad_i = (dat$time[i] * exp(k1 - k2 / dat$K[i]))
+        predicted_i = (c0 + dat$batcheff[i]) - (c0 + dat$batcheff[i]) * degrad_i
+    } else if(step1_down_object$user_parameters$reparameterisation == TRUE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 3: reparameterisation and k3 is not zero
+     Kref = mean(dat_excluded$K)
+     k3 = coef(fit_excluded)["k3"] 
+     degrad_i = (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2 / dat$K[i] + k2 / Kref)))^(1/(1-k3)))
+     predicted_i = (c0 + dat$batcheff[i]) - (c0 + dat$batcheff[i]) * degrad_i
+  } else if(step1_down_object$user_parameters$reparameterisation == FALSE & step1_down_object$user_parameters$zero_order == FALSE) {  ## Model type 4: no reparameterisation and k3 is not 0
+     k3 = coef(fit_excluded)["k3"]
+     degrad_i = (1 - ((1 - k3) * (1/(1 - k3) - dat$time[i] * exp(k1 - k2 / dat$K[i])))^(1/(1-k3)))
+     predicted_i = (c0 + dat$batcheff[i]) - (c0 + dat$batcheff[i]) * degrad_i     }
 
       # Calculate the residual for the excluded data point
       residual_i <- dat$y[i] - predicted_i
@@ -157,8 +249,9 @@ if(!is.null(validation)){
     # Store the studentized residuals in the data frame
     dat$residuals <- studentized_residuals
 
-    title_addition <- "Studentized "
-  }else if(residuals == "standardized"){
+    title_addition <- "Studentized " 
+
+    } else if(residuals == "standardized"){
     # Extract the fitted values and residuals from the model
     ordinary_residuals <- dat$residuals
 
@@ -180,8 +273,7 @@ if(!is.null(validation)){
    if(!is.null(validation)) {
    histo_dat = dat[dat$validation == "Fit",]
    } else { histo_dat = dat }
-
-   res_histo = ggplot(histo_dat, aes(x = residuals)) +
+    res_histo = ggplot(histo_dat, aes(x = residuals)) +
     geom_histogram(aes(y = after_stat(density)),
                    breaks = seq(min(histo_dat$residuals), max(histo_dat$residuals), by = (max(histo_dat$residuals) - min(histo_dat$residuals))/bins),
                    colour = "black",
@@ -218,23 +310,21 @@ if(!is.null(validation)){
       res_pred =  res_pred + facet_wrap(~batch) }
 
    # QQ plot (excludes validation points if present)
-  if(!is.null(validation)){
-  qqplot <- ggplot() +
-  stat_qq_line(data = dat[dat$validation == "Fit",], aes(sample = residuals)) +
-  geom_point(data = cbind(validation = dat[dat$validation == "Fit",]$validation, Celsius = dat[dat$validation == "Fit",]$Celsius, as.data.frame(stats::qqnorm(dat[dat$validation == "Fit",]$residuals, plot.it = FALSE))), aes(x = x, y = y, colour = Celsius)) +
+   if(!is.null(validation)) {
+   qq_dat = dat[dat$validation == "Fit",]
+   } else { qq_dat = dat }  
+
+  qqs = as.data.frame(stats::qqnorm(qq_dat$residuals, plot.it = FALSE))
+  qq_dat = data.frame(qq_dat, x.n = qqs$x, y.n = qqs$y)
+
+  qqplot <- ggplot(data = qq_dat) +
+  stat_qq_line(aes(sample = residuals)) +
+  geom_point(aes(x = x.n, y = y.n, colour = Celsius)) +
   ggtitle ("Q-Q Plot") + xlab("Theoretical Quantiles") + ylab("Sample Quantiles")+
   mytheme
       if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
       qqplot =  qqplot + facet_wrap(~batch) }
-  } else {
-  qqplot <- ggplot() +
-  stat_qq_line(data = dat, aes(sample = residuals)) +
-  geom_point(data = cbind(Celsius = dat$Celsius, as.data.frame(stats::qqnorm(dat$residuals, plot.it = FALSE))), aes(x = x, y = y, colour = Celsius)) +
-  ggtitle ("Q-Q Plot") + xlab("Theoretical Quantiles") + ylab("Sample Quantiles")+
-  mytheme  }
-     if(!is.null(step1_down_object$user_parameters$batch)){       # Panels for individual batches if present in the model
-      qqplot =  qqplot + facet_wrap(~batch) }
-
+  
    # Plot showing residuals by time (includes validation points if present)
   res_time = ggplot() + geom_point(data = dat, mapping = aes(x = time, y = residuals, colour = Celsius, shape = validation)) +
     labs( x = "Time", y = paste0(title_addition,"Residuals")) +
@@ -249,6 +339,7 @@ if(!is.null(validation)){
   results = list(res_histo, qqplot, obs_pred, res_pred, res_time)
   names(results) = c("Residuals_Histogram","Q_Q_Plot", "Observed_V_Predicted","Residuals_V_Predicted","Residuals_By_Time")
   return(results)
+closeAllConnections()
 }
 
 globalVariables(c('residuals','density','predicted','x'))
