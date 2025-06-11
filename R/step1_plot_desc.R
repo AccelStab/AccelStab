@@ -3,7 +3,7 @@
 #' @description Plot raw accelerated stability data.
 #'
 #' @details Plot the raw accelerated stability data by selecting the columns -
-#' response, time and temperature.
+#' response, time and temperature. If selected, batches are shown in separate panels.
 #'
 #' @param data Dataframe containing accelerated stability data.
 #' @param y Name of decreasing variable (e.g. concentration) contained within data
