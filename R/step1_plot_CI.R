@@ -8,7 +8,7 @@
 #'  There is an option to view the confidence intervals as a ribbon. The
 #'  confidence interval value is chosen in the step1.down function.
 #'
-#' @param step1_down_object The fit object from the step1.down function (required).
+#' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param xname Label for the x-axis (optional).
 #' @param yname Label for the y-axis (optional).
 #' @param xlim x-axis limits (optional).
