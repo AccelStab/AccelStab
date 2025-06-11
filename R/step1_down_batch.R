@@ -6,7 +6,7 @@
 #' accelerated stability and batch data that has been stored in an R data frame. Batch
 #' effects are provided by including batch as an independent variable affecting the
 #' response variable. Default factor coding for the batch variable is treatment coding
-#' where each batch level is compared to the reference level, but other factor coding 
+#' where each batch level is compared to the reference level, but other factor coding
 #' schemes set via contrasts() are also recognised. Additionally, predictions of the mean
 #' at each tested temperature for each batch are returned, including associated
 #' confidence and prediction intervals, which can be subsequently visualised with
@@ -191,7 +191,7 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
         assign(var_name, as.numeric(parms[i + 3]))
                                     }
       
-      degrad = dat$time * exp(k1 - k2/dat$K + k2/Kref) 
+      degrad = dat$time * exp(k1 - k2/dat$K + k2/Kref)
       effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")
       test = rep("", no_batches)
       
@@ -234,7 +234,7 @@ cat("The alternative parameterisation of the one-step model was used. Note that 
 
 minpack_args$par = parms
 
-if (!"lower" %in% names(minpack_args)) 	{	##
+if (!"lower" %in% names(minpack_args)) 	{
 	minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
 
 	if(length(minpack_args$par) != length(minpack_args$lower))
@@ -259,7 +259,6 @@ if (!"lower" %in% names(minpack_args)) 	{	##
         }
       }
       fit = do.call(minpack.lm::nls.lm, minpack_args)
-
  }
 
     # Generate the predictions
@@ -269,7 +268,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
 
    for (i in 1:no_fixed_effect) {
       var_name <- paste0("b", i)
-      assign(var_name, fit$par[[var_name]])##
+      assign(var_name, fit$par[[var_name]])
     }
 
     SIG = stats::vcov(fit)
@@ -333,7 +332,7 @@ pred_fct = function(coef.fit) {
         assign(var_name, as.numeric(parms[i + 3]))
                                     }
       
-      degrad = dat$time * exp(k1 - k2/dat$K) 
+      degrad = dat$time * exp(k1 - k2/dat$K)
 
       effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")
       test = rep("", no_batches)
@@ -372,10 +371,10 @@ pred_fct = function(coef.fit) {
 
         for (i in 1:no_fixed_effect) {
           var_name <- paste0("b", i)
-          parms[[var_name]] <- rnorm(1, 0, 2)##
+          parms[[var_name]] <- rnorm(1, 0, 2)
         }
 
-  minpack_args$par = parms ##
+  minpack_args$par = parms
 
 if (!"lower" %in% names(minpack_args)) 	{
 	  minpack_args$lower =  c(rep(0, 3), rep(-Inf, no_fixed_effect))    }
@@ -415,7 +414,7 @@ if (!"lower" %in% names(minpack_args)) 	{
     SIG = vcov(fit)
     sigma = summary(fit)$sigma
     DF = summary(fit)$df[2]
-    n.params = summary(fit)$df[1]  
+    n.params = summary(fit)$df[1]
 
     pred = expand.grid(time = times.pred, K = Temps, batch = batches)
     pred$Degradation = pred$time * exp(k1 - k2 / pred$K)
@@ -490,7 +489,7 @@ pred_fct = function(coef.fit) {
                                         }
 
       test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
-      residual = dat$y - eval(parse(text = test))##
+      residual = dat$y - eval(parse(text = test))
       return(residual)
     }
 
@@ -498,7 +497,7 @@ pred_fct = function(coef.fit) {
     minpack_args$fn =  MyFctNL    }
 
   # Fit model:
-  if (!is.null(parms)) { 
+  if (!is.null(parms)) {
         minpack_args$par =  parms
   if (!"lower" %in% names(minpack_args)) 	{
     minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))   }
@@ -556,7 +555,7 @@ pred_fct = function(coef.fit) {
 
     for (i in 1:no_fixed_effect) {
       var_name <- paste0("b", i)
-      assign(var_name, fit$par[[var_name]])##
+      assign(var_name, fit$par[[var_name]])
     }
 
     SIG = vcov(fit)
@@ -629,7 +628,7 @@ pred$Response = eval(parse(text = test))
         var_name <- paste0("b", i)
         assign(var_name, as.numeric(parms[i + 4]))
                                     }
-     degrad = (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2 / dat$K)))^(1/(1-k3)))##
+     degrad = (1 - ((1 - k3) * (1/(1 - k3) - dat$time * exp(k1 - k2 / dat$K)))^(1/(1-k3)))
      effs = paste0("(c0 + ", paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + ") , ") - (c0 + ",  paste0("batch_coding[bn,", 1:no_fixed_effect,"] * b", 1:no_fixed_effect, collapse = " + "), ") * degrad")
      test = rep("", no_batches)
      for (i in 1: no_batches-1) {
@@ -647,7 +646,7 @@ pred$Response = eval(parse(text = test))
     minpack_args$fn =  MyFctNL    }
 
 # Fitting the model:
-    if (!is.null(parms)) { 
+    if (!is.null(parms)) {
     minpack_args$par =  parms
   if (!"lower" %in% names(minpack_args)) 	{
     minpack_args$lower =  c(rep(0, 4), rep(-Inf, no_fixed_effect))    }
@@ -724,7 +723,7 @@ pred$Response = eval(parse(text = test))
                                              }
                                 }
     test = paste(c(test, paste(rep(")",no_fixed_effect))), collapse = "")
-    pred$Response = eval(parse(text = test))##
+    pred$Response = eval(parse(text = test))
 
 # Function to be used in drawing from multi-T
       pred_fct = function(coef.fit){
