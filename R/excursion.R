@@ -224,7 +224,7 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
         return(conc_boot)
       }
 
-      # Multi-T draws [updated]
+      # Multi-T draws
       rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
       rand.coef = t(coeffs_fit + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
       res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
