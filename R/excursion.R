@@ -4,7 +4,7 @@
 #'
 #' @details Use the output from step1.down to run a temperature excursion prediction.
 #'
-#' @param step1_down_object The fit object from the step1.down function (required).
+#' @param step1_down_object The fit object from the step1_down function (required).
 #' @param temp_changes A list that represents the order of the temperatures that
 #'  the product is subjected to. Must be the same length as time_changes.
 #' @param time_changes List that represents the times at which the temperature changes,
@@ -14,12 +14,12 @@
 #' @param draw Number of simulations used to estimate confidence intervals.
 #' @param confidence_interval Confidence level for the confidence and prediction intervals
 #'  around the predictions (default 0.95).
-#' @param intercept Use a forced y-intercept. If null, the fitted value will be used.
-#' @param ribbon Add shade to confidence and prediction intervals (optional).
+#' @param intercept Use a forced y-intercept. If null, the fitted value (of c0) will be used.
+#' @param ribbon Add shading to confidence and prediction intervals (optional).
 #' @param xname Label for the x-axis (optional).
 #' @param yname Label for the y-axis (optional).
 #' @param plot_simulations If TRUE, randomly selects 100 of the simulations to
-#'  display on the plot.
+#'  also display on the plot.
 #'
 #' @return An SB class object, a list including the following elements:
 #' \itemize{
@@ -92,6 +92,8 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
   }
 
   # Now it splits for each one of the four options
+
+  # Model Type 1: alternative parameterisation & k3 = 0
   if(step1_down_object$user_parameters$reparameterisation == T &&
      step1_down_object$user_parameters$zero_order == T){
 
@@ -107,6 +109,7 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
         preds$conc[i] <- c0 - c0 * preds$degrad[i]
       }
     }
+    
     # Boot counter
     boot_count = 1
 
@@ -114,14 +117,14 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
       # making the covariance matrix
       SIG = vcov(fit_object)
       sigma = summary(fit_object)$sigma
-
-      # making pred_fct
+      DF = summary(fit_object)$df[2]
+      n.params = summary(fit_object)$df[1]
+     
+    # making pred_fct
       pred_fct <- function(parms){
-
         k1 = parms[1]
         k2 = parms[2]
         c0 = ifelse(is.null(intercept),parms[3], intercept)
-
         conc_boot <- rep(NA,101 * length(time_changes))
         degrad_boot <- rep(NA,101 * length(time_changes))
 
@@ -135,9 +138,8 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
 
             degrad_boot[((i-1)*101 +1):(i*101)] <- (degrad_tracker) + preds$phase_time[((i-1)*101 +1):(i*101)] * exp(k1 - k2 / (preds$temps[((i-1)*101 +1):(i*101)] + 273.15)+ k2/Kref)
             conc_boot[((i-1)*101 +1):(i*101)] <- c0 - c0 * degrad_boot[((i-1)*101 +1):(i*101)]
-
-
           }
+ 
           if (i == length(time_changes)){
             if (boot_count %% 1000 == 0){
               print(paste0("Sample draw progress: ",(boot_count*100)/draw,"%"))
@@ -149,21 +151,23 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
         return(conc_boot)
       }
 
+      # Multi-T draws
+      rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+      rand.coef = t(coeffs_fit + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+      res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
-      # Multi T bootstrap
-      rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coeffs_fit)
-      res.boot = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+      CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-      CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-      simulations <- res.boot
-      res.boot = res.boot + rnorm(draw*length(preds$total_time), 0, sigma)
-      PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-
+      simulations <- res.draw
+      sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(preds$total_time), df = DF))
+      res.draw = res.draw + rnorm(n = draw*length(preds$total_time), mean = 0, sd = sigma.dist)
+ 
+      PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
+
+  # Model Type 2: regular parameterisation & k3 = 0
   }else if(step1_down_object$user_parameters$reparameterisation == F &&
            step1_down_object$user_parameters$zero_order == T){
 
@@ -174,11 +178,11 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
       }else{
         # This finds the degradation from the end of the previous phase
         degrad_tracker <- preds %>% filter(phase == (preds$phase[i] - 1)) %>% select(degrad) %>% max()
-
         preds$degrad[i] <- (degrad_tracker) + preds$phase_time[i] * exp(k1 - k2 / (preds$temps[i] + 273.15))
         preds$conc[i] <- c0 - c0 * preds$degrad[i]
       }
     }
+    
     # Boot counter
     boot_count = 1
 
@@ -186,10 +190,11 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
       # making the covariance matrix
       SIG = vcov(fit_object)
       sigma = summary(fit_object)$sigma
+      DF = summary(fit_object)$df[2]
+      n.params = summary(fit_object)$df[1]
 
       # making pred_fct
       pred_fct <- function(parms){
-
         k1 = parms[1]
         k2 = parms[2]
         c0 = ifelse(is.null(intercept),parms[3], intercept)
@@ -204,12 +209,10 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
           }else{
             # This finds the degradation from the end of the previous phase
             degrad_tracker <- degrad_boot[(i-1)*101]
-
             degrad_boot[((i-1)*101 +1):(i*101)] <- (degrad_tracker) + preds$phase_time[((i-1)*101 +1):(i*101)] * exp(k1 - k2 / (preds$temps[((i-1)*101 +1):(i*101)] + 273.15))
             conc_boot[((i-1)*101 +1):(i*101)] <- c0 - c0 * degrad_boot[((i-1)*101 +1):(i*101)]
-
-
           }
+
           if (i == length(time_changes)){
             if (boot_count %% 1000 == 0){
               print(paste0("Sample draw progress: ",(boot_count*100)/draw,"%"))
@@ -221,21 +224,23 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
         return(conc_boot)
       }
 
+      # Multi-T draws
+      rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+      rand.coef = t(coeffs_fit + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+      res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
-      # Multi T bootstrap
-      rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 3) + matrix(nrow = draw, ncol = 3, byrow = TRUE, coeffs_fit)
-      res.boot = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+      CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-      CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      simulations <- res.draw
+      sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(preds$total_time), df = DF))
+      res.draw = res.draw + rnorm(n = draw*length(preds$total_time), mean = 0, sd = sigma.dist)
 
-      simulations <- res.boot
-      res.boot = res.boot + rnorm(draw*length(preds$total_time), 0, sigma)
-      PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-
+      PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
+
+  # Model Type 3: alternative parameterisation & k3 > 0
   }else if(step1_down_object$user_parameters$reparameterisation == T &&
            step1_down_object$user_parameters$zero_order == F){
 
@@ -258,15 +263,15 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
       # making the covariance matrix
       SIG = vcov(fit_object)
       sigma = summary(fit_object)$sigma
+      DF = summary(fit_object)$df[2]
+      n.params = summary(fit_object)$df[1]
 
       # making pred_fct
       pred_fct <- function(parms){
-
         k1 = parms[1]
         k2 = parms[2]
         k3 = parms[3]
         c0 = ifelse(is.null(intercept),parms[4], intercept)
-
         conc_boot <- rep(NA,101 * length(time_changes))
         degrad_boot <- rep(NA,101 * length(time_changes))
 
@@ -280,9 +285,8 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
 
             degrad_boot[((i-1)*101 +1):(i*101)] <- (1 - ((1 - k3) * (((1- degrad_tracker) ^(1 - k3))/(1 - k3) - preds$phase_time[((i-1)*101 +1):(i*101)] * exp(k1 - k2 / (preds$temps[((i-1)*101 +1):(i*101)] + 273.15)+ k2/Kref)))^(1/(1-k3)))
             conc_boot[((i-1)*101 +1):(i*101)] <- c0 - c0 * degrad_boot[((i-1)*101 +1):(i*101)]
-
-
           }
+
           if (i == length(time_changes)){
             if (boot_count %% 1000 == 0){
               print(paste0("Sample draw progress: ",(boot_count*100)/draw,"%"))
@@ -294,21 +298,23 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
         return(conc_boot)
       }
 
-      # Multi T bootstrap
-      rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coeffs_fit)
-      res.boot = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+      # Multi-T draws
+      rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+      rand.coef = t(coeffs_fit + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+      res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
-      CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-      simulations <- res.boot
-      res.boot = res.boot + rnorm(draw*length(preds$total_time), 0, sigma)
-      PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-      PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+      simulations <- res.draw
+      sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(preds$total_time), df = DF))
+      res.draw = res.draw + rnorm(n = draw*length(preds$total_time), mean = 0, sd = sigma.dist)
 
-
+      PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+      PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
     }
 
+  # Model Type 4: regular parameterisation & k3 > 0
   }else if(step1_down_object$user_parameters$reparameterisation == F &&
            step1_down_object$user_parameters$zero_order == F){
 
@@ -320,11 +326,11 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
       # This finds the degradation from the end of the previous phase
       #browser()
       degrad_tracker <-  preds %>% filter(phase == (preds$phase[i] - 1)) %>% select(degrad) %>% max()
-
       preds$degrad[i] <- (1 - ((1 - k3) * (((1- degrad_tracker) ^(1 - k3))/(1 - k3) - preds$phase_time[i] * exp(k1 - k2 / (preds$temps[i] + 273.15))))^(1/(1-k3)))
       preds$conc[i] <- c0 - c0 * preds$degrad[i]
     }
   }
+    
   # Boot counter
   boot_count = 1
 
@@ -332,15 +338,15 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
     # making the covariance matrix
     SIG = vcov(fit_object)
     sigma = summary(fit_object)$sigma
+      DF = summary(fit_object)$df[2]
+      n.params = summary(fit_object)$df[1]
 
     # making pred_fct
     pred_fct <- function(parms){
-
       k1 = parms[1]
       k2 = parms[2]
       k3 = parms[3]
       c0 = ifelse(is.null(intercept),parms[4], intercept)
-
       conc_boot <- rep(NA,101 * length(time_changes))
       degrad_boot <- rep(NA,101 * length(time_changes))
 
@@ -351,11 +357,8 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
         }else{
           # This finds the degradation from the end of the previous phase
           degrad_tracker <- degrad_boot[(i-1)*101]
-
           degrad_boot[((i-1)*101 +1):(i*101)] <- (1 - ((1 - k3) * (((1- degrad_tracker) ^(1 - k3))/(1 - k3) - preds$phase_time[((i-1)*101 +1):(i*101)] * exp(k1 - k2 / (preds$temps[((i-1)*101 +1):(i*101)] + 273.15))))^(1/(1-k3)))
           conc_boot[((i-1)*101 +1):(i*101)] <- c0 - c0 * degrad_boot[((i-1)*101 +1):(i*101)]
-
-
         }
         if (i == length(time_changes)){
           if (boot_count %% 1000 == 0){
@@ -364,24 +367,25 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
           boot_count <<- boot_count+1
         }
       }
-
       return(conc_boot)
     }
 
-    # Multi T bootstrap
-    rand.coef = rmvt(draw, sigma = SIG, df = nrow(dat) - 4) + matrix(nrow = draw, ncol = 4, byrow = TRUE, coeffs_fit)
-    res.boot = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+    # Multi-T draws
+   rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+   rand.coef = t(coeffs_fit + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+   res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
-    CI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-    CI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+    CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+    CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
-    simulations <- res.boot
-    res.boot = res.boot + rnorm(draw*length(preds$total_time), 0, sigma)
-    PI1b = apply(res.boot, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-    PI2b = apply(res.boot, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+    simulations <- res.draw
+    sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*length(preds$total_time), df = DF))
+    res.draw = res.draw + rnorm(n = draw*length(preds$total_time), mean = 0, sd = sigma.dist)
 
-
-  }}
+    PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+    PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+  }
+}
 
   if(PI | CI | plot_simulations){
   preds <- cbind(preds,CI1b) %>% cbind(CI2b) %>% cbind(PI1b) %>% cbind(PI2b)
@@ -429,15 +433,14 @@ excursion <- function(step1_down_object, temp_changes, time_changes, CI = TRUE,
     scale_color_discrete(name = "Celsius") +
     theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
 
+ print(plot1)
+
   if(PI ==F && CI==F && plot_simulations==F){
     simulations = NULL}
   results = list(preds,simulations,plot1,step1_down_object$user_parameters)
   names(results) = c("predictions","simulations","excursion_plot","user_parameters")
   class(results) = "SB"
   return(results)
-
   }
 
 globalVariables(c('phase','degrad','temps','total_time','conc','simulation_no'))
-
-
