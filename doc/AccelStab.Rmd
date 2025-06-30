@@ -93,7 +93,7 @@ unique(antigenicity$time)
 
 Data obtained after 6 months will be used for validation only (they are not used to fit the model). The raw data of the study can be visualised quickly with the help of the function step1_plot_desc as follows:
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 step1_plot_desc(data = antigenicity, .time = "time", y = "conc", C = "Celsius", validation = "Validate", yname = "Antigenicity")
 ```
 
@@ -134,13 +134,13 @@ head(res$prediction[,1:5])
 
 The predictions can be visualised with the function step1_plot_pred. A plot is then drawn with the R package ggplot2. If needed, one can easily add any additional aesthetics or line from the ggplot graph.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 step1_plot_pred(res, yname = "Antigenicity")
 ```
 
 As the goal of an accelerated stability study is to extrapolate the CQA for a longer time period, the predictions can be extrapolated in AccelStab by re-running step1_down and using the argument max_time_pred. For example, the following code will predict the antigenicity until 3 years and a lower specification limit (LSL) is added at 65.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100), max_time_pred = 3)
 graph = step1_plot_pred(res, yname = "Antigenicity")
 graph = graph + geom_hline(aes(yintercept = 65), linetype = "dotted")
@@ -149,7 +149,7 @@ graph
 
 The model can also extrapolate the degradation for any temperature not included in the design. This is illustrated in the following line by extrapolating the degradation at 2C by using the argument temp_pred_C in the step1_down function.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100), max_time_pred = 3, temp_pred_C = 2)
 step1_plot_pred(res, yname = "Antigenicity")
 
@@ -157,7 +157,7 @@ step1_plot_pred(res, yname = "Antigenicity")
 
 This option is very useful to predict long-term storage at 5C when no data are collected at 5C. This is illustrated in the following lines by re-running step1_down without the data at 5C (except at time zero), then extrapolating the predictions at 5C.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 subdat = antigenicity[!(antigenicity$Celsius == "5" & antigenicity$time != 0),]
 res = step1_down(data = subdat, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, temp_pred_C = 5)
 step1_plot_pred(res, yname = "Antigenicity")
@@ -178,7 +178,7 @@ Our recommendation to calculate the statistical intervals is to sample the coeff
 
 Three main functions are available in AccelStab to visualise the statistical intervals. The first one, step1_plot_CI, can be used to visualise the predictions with confidence intervals. The second one, step1_plot_PI, can be used to visualise the predictions with prediction intervals. The third one, step1_plot_T, can be used to visualise the confidence and prediction interval for a given temperature. A ribbon can be added easily by using the argument ribbon.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
 step1_plot_CI(res, yname = "Antigenicity")
 step1_plot_PI(res, yname = "Antigenicity", ribbon = TRUE)
@@ -193,7 +193,7 @@ A Temperature excursion is any deviation from the product's optimal temperature 
 
 This updated equation is incorporated into the excursion function. The following example will estimate a temperature excursion on top of the antigenicity data set. Initially the product is stored at 5 degrees for 6 months, then it is subject to 35 degrees for 1 month, then it is returned to 6 degrees for 17 months. Predictions and intervals are available alongside a plot.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
 exc <- excursion(res, temp_changes = c(5,35,6), time_changes = c(6/12,7/12,24/12), yname = "Antigenicity")
 tail(exc$predictions[,-c(4)])
@@ -211,7 +211,7 @@ head(draws)
 ```
 
 The predictions at 1 year can be calculated "by hand" as follows and compared to the predictions at t0:
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 p1 = draws$c0 - draws$c0 * (1 - ((1 - draws$k3) * (1/(1 - draws$k3) - 1 * exp(draws$k1 - draws$k2 / (5+273.15))))^(1/(1-draws$k3)))
 loss_1y = 1 - p1/draws$c0
 mean(loss_1y)
@@ -229,7 +229,7 @@ One can see that the expected loss is 19.5% with a 95% CI given by [14.8, 24.6]%
 In this data set, the potency of a vaccine is measured with 3 temperatures and time points from 0 to 6 months (0, 3 and 6 months at 5C, and 1.5, 3 and 6 months at 25C, and 1, 2 and 4 weeks at 37C). The goal is to predict the vaccine drug product potency at 5C in 3 years. The data set contains a total of 78 potency measurements including 55 measurements until 6 months and 23 measurements obtained a posteriori at 5C (from 6 months to 3 years) used to validate the model.
 
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 data(potency)
 potency$Validate = as.factor(ifelse(potency$Time < 8, 0, 1))
 head(potency)
@@ -256,7 +256,7 @@ confint(res$fit)
 
 Built-in visualisations of residuals are produced as a list of five plots, the first of which is a histogram.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 step1_plot_diagnostic(res)[1]
 ```
 
@@ -264,7 +264,7 @@ step1_plot_diagnostic(res)[1]
 
 The root mean square error (RMSE) can be calculated by the function step1_down_rmse for any sets of starting values. This might be useful to choose the starting values to model the fit with step1_down function. The following heat map illustrates the RMSE for multiple sets of k1 and k2. A log scale is used for better visualisation.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 RMSE = step1_down_rmse(data = potency, y = "Potency", .time = "Time",
  C = "Celsius", parms = list(c0 = 9.5, k1 = seq(38, 42, 0.02),
   k2 = seq(12000, 14000, 5), k3 = 0))
@@ -282,7 +282,7 @@ Note that the two kinetic parameters k1 and k2 are highly correlated. One might 
 
 The predictions and statistical intervals can be obtained as previously explained.
 
-```{r, warning=FALSE}
+```{r, fig.width=8, fig.height=6, out.width='75%',dpi=200, fig.align='center', warning=FALSE}
 head(res$prediction[,-(6:8)])
 plot = step1_plot_pred(res, yname = "Potency")
 plot = plot + scale_y_continuous(limits = c(5,10))
@@ -306,7 +306,7 @@ T9 = (1 - 9/draws$c0) / exp(draws$k1 - draws$k2 / (5+273.15))
 
 The vector T9 is the distribution of time needed to reach the lower specification (9). This distribution can be visualised with a histogram where the estimated mean and its 95% CI are added.
 
-```{r}
+```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 mean(T9)
 quantile(T9, c(0.025, 0.975))
 hist(T9, main = "Time to reach the lower specification at 5C")

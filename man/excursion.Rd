@@ -20,7 +20,7 @@ excursion(
 )
 }
 \arguments{
-\item{step1_down_object}{The fit object from the step1.down function (required).}
+\item{step1_down_object}{The fit object from the step1_down function (required).}
 
 \item{temp_changes}{A list that represents the order of the temperatures that
 the product is subjected to. Must be the same length as time_changes.}
@@ -37,16 +37,16 @@ Starts from time zero and must be the same length as temp_changes.}
 \item{confidence_interval}{Confidence level for the confidence and prediction intervals
 around the predictions (default 0.95).}
 
-\item{intercept}{Use a forced y-intercept. If null, the fitted value will be used.}
+\item{intercept}{Use a forced y-intercept. If null, the fitted value (of c0) will be used.}
 
-\item{ribbon}{Add shade to confidence and prediction intervals (optional).}
+\item{ribbon}{Add shading to confidence and prediction intervals (optional).}
 
 \item{xname}{Label for the x-axis (optional).}
 
 \item{yname}{Label for the y-axis (optional).}
 
 \item{plot_simulations}{If TRUE, randomly selects 100 of the simulations to
-display on the plot.}
+also display on the plot.}
 }
 \value{
 An SB class object, a list including the following elements:

@@ -40,6 +40,8 @@ step1_sample_mvt(
 model which aims to reduce correlation between k1 and k2.}
 
 \item{zero_order}{Set kinetic order, k3, to zero (straight lines).}
+
+\item{...}{Further arguments to passed to minpack.lm.}
 }
 \value{
 A matrix containing parameter draws from the mvt distribution.

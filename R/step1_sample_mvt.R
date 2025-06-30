@@ -18,6 +18,7 @@
 #' @param reparameterisation Use alternative parameterisation of the one-step
 #'  model which aims to reduce correlation between k1 and k2.
 #' @param zero_order Set kinetic order, k3, to zero (straight lines).
+#' @param ... Further arguments to passed to minpack.lm.
 #'
 #' @return A matrix containing parameter draws from the mvt distribution.
 #'
@@ -46,7 +47,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
 
   if (is.null(K) & is.null(C))
     stop("Select the temperature variable in Kelvin or Celsius")
-  
+
   if (!is.null(parms) & !is.list(parms))
     stop("The starting values for parameters must be a list, or keep as NULL")
 
@@ -55,7 +56,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
       stop("Validation column must contain 1s and 0s only")
 
   minpack_args = list(...)
-  
+
   ## Temperature: both C and K are provided
   if(!is.null(C) & !is.null(K)) {
     data[, C] <- ifelse(is.na(data[, C]) & !is.na(data[, K]),
@@ -72,7 +73,7 @@ step1_sample_mvt <- function (data, y, .time, K = NULL, C = NULL, validation = N
   if (!is.null(K) & is.null(C)) {
     C = 'C'
     data[, C] = data[, K] - 273.15 }
-  
+
   data <- data[complete.cases(data[, c(C,K,y,.time)]), ]
 
   dat = data
@@ -177,7 +178,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
       fit = do.call(minpack.lm::nls.lm, minpack_args)
 
  }
-    
+
     SIG = stats::vcov(fit)
     DF = summary(fit)$df[2]
     n.params = summary(fit)$df[1]
@@ -414,7 +415,7 @@ if (!"lower" %in% names(minpack_args)) 	{	##
     SIG = vcov(fit)
     DF = summary(fit)$df[2]
     n.params = summary(fit)$df[1]
-  
+
         pred_fct = function(coef.fit)
         {
           degrad = 1 - ((1 - coef.fit[3]) * (1/(1 - coef.fit[3]) - pred$time * exp(coef.fit[1] - coef.fit[2] / pred$K)))^(1/(1-coef.fit[3]))
@@ -436,3 +437,4 @@ if (!"lower" %in% names(minpack_args)) 	{	##
   return(rand.coef)
 
 }
+utils::globalVariables(c("pred"))
