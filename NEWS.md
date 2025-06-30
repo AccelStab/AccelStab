@@ -1,3 +1,17 @@
+# AccelStab 2.3.1
+This is a minor release that changes the following...
+
+### step1_down() and step1_sample_mvt()
+- Replaced sigma with chisq for multi-temperature models
+- The residual error standard deviation (sigma) is now sampled from its own distribution rather than being treated as fixed.
+
+### step1_sample_mvt()
+- Updated to align with step1_down()
+- Added ... (ellipsis) to support optional arguments passed to minpack.lm::nlsLM() during model fitting.
+
+### excursion()
+- Updated procedure for excursion() to draw from multi-t dist like used in step1_down() and step1_sample_mvt().
+
 # AccelStab 2.2.1
 
 - Fixed a minor plot issue in the vignette.
