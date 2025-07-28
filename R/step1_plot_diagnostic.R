@@ -3,10 +3,12 @@
 #' @description Generate residual diagnostic plots from a step1_down fit.
 #'
 #' @details Use the fit object obtained from the step1_down or step1_down_batch functions to plot the
-#' residual diagnostic plots, assess the quality of fit and search for anomalies.
-#' Change the type of Residuals assessed.
+#' residual diagnostic plots, assess the quality of fit and search for anomalies. The type of residuals to be assessed
+#' can also be selected.
 #' Plots created are: Residuals Histogram, QQ Plot of Residuals, Observed Vs Predicted results, Residuals
-#'  Vs Predicted results and Residuals By Time. If present, batches are shown in separate panels.
+#'  Vs Predicted results and Residuals By Time.
+#' If the step1_down object specified validation data, residuals of these data points are displayed only in the
+#' latter three plots. If present in the step1_down object, batches are detected and shown in separate panels per plot.
 #'
 #' @param step1_down_object The fit object from the step1_down or step1_down_batch functions (required).
 #' @param bins The number of bins in the Histogram plot (default 7).
