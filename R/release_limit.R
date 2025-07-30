@@ -422,16 +422,17 @@ preds = rbind(predsFit, predsRL)
 
 # Obtain raw data with exactly the same temp as shelf_temp (if present)
 # and exclude any of these datapoints which go beyond the shelf_time predictions
-if(any(step1_down_object$data$Celsius == shelf_temp)){
-dat = subset(step1_down_object$data, Celsius == shelf_temp) 
+if(shelf_temp %in% step1_down_object$data$Celsius){
+dat = subset(step1_down_object$data, Celsius == shelf_temp)
     if(max(dat$time) > shelf_time){
-      dat = subset(dat, time <= shelf_time)
-                                  }                  }
+      dat = subset(dat, time <= shelf_time) } }                  
 
-# Recognise whether any remaining datapoints are validation data; display these accordingly
-if(exists("dat") & !is.null(dat$validation) & ("Validation" %in% dat$validation)){
-           shape_types <- c(16, 1)
-           names(shape_types) <- c("Fit", "Validation") } else {validation = NULL}
+# Recognise whether any remaining data points are validation data; make sure these have different shapes in plot
+if(exists("dat")){
+    if(!is.null(dat$validation)){
+      if("Validation" %in% dat$validation){
+      shape_types <- c(16, 1)
+      names(shape_types) <- c("Fit", "Validation") }} else { validation = NULL } } 
 
  # Prepatation for the figure and aesthetics
   lines_c <- c("black","blue")
@@ -469,11 +470,11 @@ mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element
 # Figure showing predictions with RL and CIs for the given shelf temperature
   if(interval == "CI"){
     plot1 = ggplot2::ggplot() + 
-      {if(exists("dat"))geom_point(data = dat, mapping = aes(x= time, y = y, shape = validation), colour = lines_c["Fit"])} +
+      {if(exists("dat")){geom_point(data = dat, mapping = aes(x= time, y = y, shape = validation), colour = lines_c["Fit"])}} +
       ggtitle(paste0("Release Limit Estimation Using ",confidence_interval*100,"% Confidence Interval,\nShelf Temperature = ", shelf_temp,"°C And Lower Specification Limit = ",LSL))+
       labs( x = xname, y = yname) +
-      {if(!is.null(xlim)){ coord_cartesian(xlim = xlim)} else { coord_cartesian(xlim = c(0, shelf_time))} } +
-      {if(!is.null(ylim))coord_cartesian(ylim = ylim)} +
+      {if(!is.null(xlim)){coord_cartesian(xlim = xlim)} else { coord_cartesian(xlim = c(0, shelf_time))} } +
+      {if(!is.null(ylim)){coord_cartesian(ylim = ylim)}} +
       mytheme +
       geom_hline(yintercept = LSL, linetype = "solid", colour = "red", linewidth = 0.5) +
       geom_line(data = preds, aes(x = time, y = Response, colour = Fit, linewidth = Fit), linetype = "solid") +
@@ -483,18 +484,18 @@ mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element
       scale_fill_manual(name = NULL, values = ribbons_f) +
       scale_linewidth_manual(name = NULL, values = lines_w) +
       scale_alpha_manual(name = NULL, values = ribbons_a) +
-      {if(!is.null(dat$validation) & ("Validation" %in% dat$validation)){scale_shape_manual(values = shape_types, name = NULL) 
-        } else { scale_shape(guide = "none")} } +
+      {if(exists("dat")){if(!is.null(dat$validation)){if("Validation" %in% dat$validation){scale_shape_manual(values = shape_types, name = NULL) 
+        } else {scale_shape(guide = "none")}}}} +
       theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
    
 # Figure showing predictions with PIs and RL with PIs for the given shelf temperature
      }else{
     plot1 = ggplot2::ggplot() + 
-    {if(exists("dat"))geom_point(data = dat, mapping = aes(x= time, y = y, shape = validation), colour = lines_c["Fit"])} +
+    {if(exists("dat")){geom_point(data = dat, mapping = aes(x= time, y = y, shape = validation), colour = lines_c["Fit"])}} +
     ggtitle(paste0("Release Limit Estimation Using ",confidence_interval*100,"% Prediction Interval,\nShelf Temperature = ", shelf_temp,"°C And Lower Specification Limit = ",LSL))+
     labs( x = xname, y = yname) +
-    {if(!is.null(xlim)){ coord_cartesian(xlim = xlim)} else { coord_cartesian(xlim = c(0, shelf_time))} } +
-    {if(!is.null(ylim))coord_cartesian(ylim = ylim)} +
+    {if(!is.null(xlim)){coord_cartesian(xlim = xlim)} else { coord_cartesian(xlim = c(0, shelf_time))} } +
+    {if(!is.null(ylim)){coord_cartesian(ylim = ylim)}} +
     mytheme +
     geom_hline(yintercept = LSL, linetype = "solid", colour = "red", linewidth = 0.5) +
     geom_line(data = preds, aes(x = time, y = Response, colour = Fit, linewidth = Fit), linetype = "solid") +
@@ -504,8 +505,8 @@ mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element
     scale_fill_manual(name = NULL, values = ribbons_f) +
     scale_linewidth_manual(name = NULL, values = lines_w) +
     scale_alpha_manual(name = NULL, values = ribbons_a) +
-    {if(!is.null(dat$validation) & ("Validation" %in% dat$validation)){scale_shape_manual(values = shape_types, name = NULL) 
-      } else { scale_shape(guide = "none")} } +
+    {if(exists("dat")){if(!is.null(dat$validation)){if("Validation" %in% dat$validation){scale_shape_manual(values = shape_types, name = NULL) 
+    } else {scale_shape(guide = "none")}}}} +
     theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
   }
 
