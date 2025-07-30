@@ -483,7 +483,8 @@ mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element
       scale_fill_manual(name = NULL, values = ribbons_f) +
       scale_linewidth_manual(name = NULL, values = lines_w) +
       scale_alpha_manual(name = NULL, values = ribbons_a) +
-      {if(!is.null(dat$validation) & ("Validation" %in% dat$validation))scale_shape_manual(values = shape_types, name = NULL)} +
+      {if(!is.null(dat$validation) & ("Validation" %in% dat$validation)){scale_shape_manual(values = shape_types, name = NULL) 
+        } else { scale_shape(guide = "none")} } +
       theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
    
 # Figure showing predictions with PIs and RL with PIs for the given shelf temperature
@@ -503,7 +504,8 @@ mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element
     scale_fill_manual(name = NULL, values = ribbons_f) +
     scale_linewidth_manual(name = NULL, values = lines_w) +
     scale_alpha_manual(name = NULL, values = ribbons_a) +
-    {if(!is.null(dat$validation) & ("Validation" %in% dat$validation))scale_shape_manual(values = shape_types, name = NULL)} +
+    {if(!is.null(dat$validation) & ("Validation" %in% dat$validation)){scale_shape_manual(values = shape_types, name = NULL) 
+      } else { scale_shape(guide = "none")} } +
     theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
   }
 
