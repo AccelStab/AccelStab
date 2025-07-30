@@ -1,15 +1,13 @@
-#' @title Calculate and Plot Release Limit
+#' @title Calculate and Plot Release Limit Information
 #'
 #' @description Calculate the release limit for a product at a given shelf temperature, shelf time
-#' and specification limit.
+#' and lower specification limit.
 #'
-#' @details Use the output from the step1_down() function to calculate the release limit  for a product
-#' at a given shelf temperature, shelf time and lower specification limit. The returned release limit is also
-#' used to predict the product's degradation  and provide corresponding confidence or prediction intervals.
-#' The method for computing statistical intervals is inherited from the given step1_down object (using either draws
-#' from the multivariate t-distribution or analytical formulae). Release limit information is presented both in a
-#' table and in a plot displaying predicted degradation and statistical intervals. In addition to release limit
-#' predictions, the plot displays the original model fit and any non-validation datapoints at the given shelf temperature.
+#' @details Release limit information is presented both in a table and in a plot displaying the lower specification
+#' limit (LSL) along with the predicted degradation and statistical intervals. The method for computing the intervals
+#' is inherited from the given step1_down object (using either draws from the multivariate t-distribution or
+#' analytical formulae). In addition to the release limit predictions, the plot displays the original fit for the
+#' given shelf temperature as well as any data points at that temperature within the given shelf time.
 #' Fits using step1_down_batch() are partially supported; at present, the release limit is calculated
 #' only for the reference level of the batch variable (default is the first level).
 #'
@@ -31,11 +29,12 @@
 #' @examples
 #'
 #' # Run step1_down() fit
-#' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "time",
-#'                     C = "Celsius", validation = "validA", max_time_pred = 0.6)
+#' fit1 <- step1_down(data = antigenicity, y = "conc", .time = "N.days",
+#'                     C = "Celsius", validation = "validA")
 #' 
-#' myRL =release_limit(step1_down_object = fit1, shelf_temp = 5, shelf_time = 0.6,
-#'                      LSL = 85, interval = "CI", confidence_interval = 0.95)
+#' myRL <- release_limit(step1_down_object = fit1, shelf_temp = 5, shelf_time = 420,
+#'                      LSL = 75, interval = "PI", confidence_interval = 0.95,
+#'                      yname = "Concentration", xname = "Days")
 #'
 #' @import ggplot2
 #'
@@ -79,6 +78,8 @@ cat("Models with batch effects are not yet fully supported. Release limit inform
 
   SIG = vcov(fit)
   sigma = summary(fit)$sigma
+  DF = summary(fit)$df[2]
+  n.params = summary(fit)$df[1]
 
 ## STATISTICAL INTERVALS COMPUTED USING ANALYTICAL METHOD
 if(is.null(step1_down_object$user_parameters$draw)){
@@ -86,10 +87,10 @@ if(is.null(step1_down_object$user_parameters$draw)){
 # Model Type 4 ("standard" model) predictions
 if(step1_down_object$user_parameters$reparameterisation == F && step1_down_object$user_parameters$zero_order == F){
 
-  k1 = fit$par$k1
-  k2 = fit$par$k2
-  k3 = fit$par$k3
-  c0 = fit$par$c0
+  k1 = coef(fit)[1]
+  k2 = coef(fit)[2]
+  k3 = coef(fit)[3]
+  c0 = coef(fit)[4]
   preds$degrad <- (1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / (preds$K))))^(1/(1-k3)))
   preds$conc <- c0 - c0 * preds$degrad
 
@@ -105,9 +106,9 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
 
 # Model Type 1 (reparameterisation and k3 = 0)
  } else if(step1_down_object$user_parameters$reparameterisation == T && step1_down_object$user_parameters$zero_order == T){
-  k1 = fit$par$k1
-  k2 = fit$par$k2
-  c0 = fit$par$c0
+  k1 = coef(fit)[1]
+  k2 = coef(fit)[2]
+  c0 = coef(fit)[3]
   preds$degrad = preds$total_time * exp(k1 - k2/preds$K + k2/Kref)
   preds$conc = c0 - c0 * preds$degrad
 
@@ -122,9 +123,9 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
 
 # Model Type 2 (no reparameterisation and k3 = 0)
 } else if(step1_down_object$user_parameters$reparameterisation == F && step1_down_object$user_parameters$zero_order == T){
-  k1 = fit$par$k1
-  k2 = fit$par$k2
-  c0 = fit$par$c0
+  k1 = coef(fit)[1]
+  k2 = coef(fit)[2]
+  c0 = coef(fit)[3]
   preds$degrad = preds$total_time * exp(k1 - k2 / preds$K)
   preds$conc = c0 - c0 * preds$degrad
 
@@ -138,10 +139,10 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
 
 # Model Type 3 (reparameterisation and k3 is not zero)
 }else if(step1_down_object$user_parameters$reparameterisation == T && step1_down_object$user_parameters$zero_order == F){
-  k1 = fit$par$k1
-  k2 = fit$par$k2
-  k3 = fit$par$k3
-  c0 = fit$par$c0
+  k1 = coef(fit)[1]
+  k2 = coef(fit)[2]
+  k3 = coef(fit)[3]
+  c0 = coef(fit)[4]
   preds$degrad = 1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / preds$K + k2 / Kref)))^(1/(1-k3))
   preds$conc = c0 - c0*preds$degrad
 
@@ -186,10 +187,6 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
     c0 = coef(fit)[4]
-    SIG = vcov(fit)
-    sigma = summary(fit)$sigma
-    DF = summary(fit)$df[2]
-    n.params = summary(fit)$df[1]
     draw = step1_down_object$user_parameters$draw
 
 # Predict response
@@ -230,10 +227,6 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     c0 = coef(fit)[3]
-    SIG = vcov(fit)
-    sigma = summary(fit)$sigma
-    DF = summary(fit)$df[2]
-    n.params = summary(fit)$df[1]
     draw = step1_down_object$user_parameters$draw
 
   # Predict response
@@ -274,10 +267,6 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     c0 = coef(fit)[3]
-    SIG = vcov(fit)
-    sigma = summary(fit)$sigma
-    DF = summary(fit)$df[2]
-    n.params = summary(fit)$df[1]
     draw = step1_down_object$user_parameters$draw
 
 # Predict response
@@ -319,10 +308,6 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
     c0 = coef(fit)[4]
-    SIG = vcov(fit)
-    sigma = summary(fit)$sigma
-    DF = summary(fit)$df[2]
-    n.params = summary(fit)$df[1]
     draw = step1_down_object$user_parameters$draw
 
    # Predict response
@@ -435,23 +420,34 @@ predsRL = data.frame(Fit = RL_text,
 
 preds = rbind(predsFit, predsRL)
 
-# Obtain the raw data with the same temp as shelf_temp (if present)
-# and remove and validation datapoints
+# Obtain raw data with exactly the same temp as shelf_temp (if present)
+# and exclude any of these datapoints which go beyond the shelf_time predictions
 if(any(step1_down_object$data$Celsius == shelf_temp)){
 dat = subset(step1_down_object$data, Celsius == shelf_temp) 
-}
-  
-if(exists("dat") & !is.null(step1_down_object$user_parameters$validation)){
-dat = subset(dat, validation == "Fit")
-}
- 
-# Prepatation for the figure and aesthetics
+    if(max(dat$time) > shelf_time){
+      dat = subset(dat, time <= shelf_time)
+                                  }                  }
+
+# Recognise whether any remaining datapoints are validation data; display these accordingly
+if(exists("dat") & !is.null(dat$validation) & ("Validation" %in% dat$validation)){
+           shape_types <- c(16, 1)
+           names(shape_types) <- c("Fit", "Validation") } else {validation = NULL}
+
+ # Prepatation for the figure and aesthetics
   lines_c <- c("black","blue")
   names(lines_c) <- c("Fit", RL_text)
 
+if(interval == "CI"){
   lines_t <- c("dotted", NA)
   names(lines_t) <- c("Fit", RL_text)
-
+}else{
+  lines_t <- c("longdash", NA)
+  names(lines_t) <- c("Fit", RL_text)  
+}
+  
+  lines_w = c(0.5, 1)
+  names(lines_w) <- c("Fit", RL_text)
+  
   ribbons_f = c(NA, "blue")
   names(ribbons_f) = c("Fit", RL_text)
 
@@ -473,47 +469,43 @@ mytheme <- ggplot2::theme(legend.position = "bottom", strip.background = element
 # Figure showing predictions with RL and CIs for the given shelf temperature
   if(interval == "CI"){
     plot1 = ggplot2::ggplot() + 
-      {if(exists("dat"))geom_point(data = dat, mapping = aes(x= time, y = y), colour = lines_c["Fit"])} +
+      {if(exists("dat"))geom_point(data = dat, mapping = aes(x= time, y = y, shape = validation), colour = lines_c["Fit"])} +
       ggtitle(paste0("Release Limit Estimation Using ",confidence_interval*100,"% Confidence Interval,\nShelf Temperature = ", shelf_temp,"°C And Lower Specification Limit = ",LSL))+
       labs( x = xname, y = yname) +
       {if(!is.null(xlim)){ coord_cartesian(xlim = xlim)} else { coord_cartesian(xlim = c(0, shelf_time))} } +
       {if(!is.null(ylim))coord_cartesian(ylim = ylim)} +
       mytheme +
-      geom_hline(yintercept = LSL, linetype = "dashed") +
-      geom_line(data = preds, aes(x = time, y = Response, colour = Fit), linetype = "solid") +
+      geom_hline(yintercept = LSL, linetype = "solid", colour = "red", linewidth = 0.5) +
+      geom_line(data = preds, aes(x = time, y = Response, colour = Fit, linewidth = Fit), linetype = "solid") +
       geom_ribbon(data = preds, aes(x = time, ymin = CI1, ymax = CI2, colour = Fit, fill = Fit, alpha = Fit, linetype = Fit)) +
       scale_linetype_manual(name = NULL, values = lines_t) +
       scale_colour_manual(name = NULL, values = lines_c) +
       scale_fill_manual(name = NULL, values = ribbons_f) +
+      scale_linewidth_manual(name = NULL, values = lines_w) +
       scale_alpha_manual(name = NULL, values = ribbons_a) +
+      {if(!is.null(dat$validation) & ("Validation" %in% dat$validation))scale_shape_manual(values = shape_types, name = NULL)} +
       theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
    
 # Figure showing predictions with PIs and RL with PIs for the given shelf temperature
      }else{
     plot1 = ggplot2::ggplot() + 
-    {if(exists("dat"))geom_point(data = dat, mapping = aes(x= time, y = y), colour = lines_c["Fit"])} +
+    {if(exists("dat"))geom_point(data = dat, mapping = aes(x= time, y = y, shape = validation), colour = lines_c["Fit"])} +
       ggtitle(paste0("Release Limit Estimation Using ",confidence_interval*100,"% Prediction Interval,\nShelf Temperature = ", shelf_temp,"°C And Lower Specification Limit = ",LSL))+
     labs( x = xname, y = yname) +
     {if(!is.null(xlim)){ coord_cartesian(xlim = xlim)} else { coord_cartesian(xlim = c(0, shelf_time))} } +
     {if(!is.null(ylim))coord_cartesian(ylim = ylim)} +
     mytheme +
-    geom_hline(yintercept = LSL, linetype = "dashed") +
-    geom_line(data = preds, aes(x = time, y = Response, colour = Fit), linetype = "solid") +
+    geom_hline(yintercept = LSL, linetype = "solid", colour = "red", linewidth = 0.5) +
+    geom_line(data = preds, aes(x = time, y = Response, colour = Fit, linewidth = Fit), linetype = "solid") +
     geom_ribbon(data = preds, aes(x = time, ymin = PI1, ymax = PI2, colour = Fit, fill = Fit, alpha = Fit, linetype = Fit)) +
     scale_linetype_manual(name = NULL, values = lines_t) +
     scale_colour_manual(name = NULL, values = lines_c) +
     scale_fill_manual(name = NULL, values = ribbons_f) +
+    scale_linewidth_manual(name = NULL, values = lines_w) +
     scale_alpha_manual(name = NULL, values = ribbons_a) +
+    {if(!is.null(dat$validation))scale_shape_manual(values = shape_types, name = NULL)} +
     theme(legend.box = "vertical", legend.spacing = unit(-0.4,"line"))
   }
-
-  if (is.null(step1_down_object$user_parameters$max_time_pred)){
-    max_time_pred = max(step1_down_object$data$time)}else{
-      max_time_pred = step1_down_object$user_parameters$max_time_pred
-    }
-
-  if(max_time_pred != shelf_time){
- cat("\nTo ensure the release limit predictions are the same length as the fit predictions, please align the values of max_time_pred in your step1_down() call with shelf_time in your release_limit() call.\n")}
 
 # Display plot in console
 print(plot1)
