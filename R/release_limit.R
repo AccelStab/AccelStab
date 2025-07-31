@@ -8,8 +8,7 @@
 #' is inherited from the given step1_down object (using either draws from the multivariate t-distribution or
 #' analytical formulae). In addition to the release limit predictions, the plot displays the original fit for the
 #' given shelf temperature as well as any data points at that temperature within the given shelf time.
-#' Fits using step1_down_batch() are partially supported; at present, the release limit is calculated
-#' only for the reference level of the batch variable (default is the first level).
+#' For fits using step1_down_batch(), the returned release limit applies to any batch.
 #'
 #' @param step1_down_object The fit object from the step1_down() or step1_down_batch() function (required).
 #' @param shelf_temp The temperature (in Celsius) at which the product will be stored (required).
@@ -37,6 +36,7 @@
 #'                      yname = "Concentration", xname = "Days")
 #'
 #' @import ggplot2
+#' @import stats
 #'
 #' @export release_limit
 
@@ -62,7 +62,7 @@ if(!(interval %in% c("CI", "PI"))){
 stop("Ensure interval is entered as either 'CI' or 'PI'.") }
 
 if(!is.null(step1_down_object$user_parameters$batch)){
-cat("Models with batch effects are not yet fully supported. Release limit information will be returned only for the reference level of the batch variable (default is the first level).\n\n") }
+cat("For fits using step1_down_batch(), the returned release limit applies to any batch.\nNote that the accompanying plot displays the original model fit without batch effects.")
 
 # Preparations for the release limit (RL) calculation and predictions
   fit <- step1_down_object$fit
@@ -187,11 +187,9 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
     c0 = coef(fit)[4]
-    draw = step1_down_object$user_parameters$draw
-
+    
 # Predict response
  preds$degrad <- (1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / (preds$K))))^(1/(1-k3)))
- preds$conc <- c0 - c0 * preds$degrad
 
 	# Prediction function
   pred_fct = function(coef.fit) {
@@ -199,27 +197,6 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
   conc = coef.fit[4] - coef.fit[4]*degrad
   return(conc)              }
       
-	# Multi T samples
-  rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
-  rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
-  res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
-
-  if(interval == "CI") {
-  preds$CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-  preds$CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-  preds$degrad_CI_up <- (c0 - preds$CI1b) / c0
-  preds$degrad_CI_low <- (c0 - preds$CI2b) / c0
-} else {
-  sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*nrow(preds), df = DF))
-  res.draw = res.draw + rnorm(n = draw*nrow(preds), mean = 0, sd = sigma.dist)
-  preds$PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-  preds$PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-  preds$degrad_PI_up <- (c0 - preds$PI1b) / c0
-  preds$degrad_PI_low <- (c0 - preds$PI2b) / c0
-}
-  
 # Model Type 1 (reparameterisation and k3 = 0)
    } else if(step1_down_object$user_parameters$reparameterisation == T && step1_down_object$user_parameters$zero_order == T){
 	
@@ -227,11 +204,9 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     c0 = coef(fit)[3]
-    draw = step1_down_object$user_parameters$draw
 
   # Predict response
    preds$degrad <- preds$total_time * exp(k1 - k2 / preds$K + k2 / Kref)
-   preds$conc <- c0 - c0 * preds$degrad
 
 	# Prediction function
    pred_fct = function(coef.fit) {
@@ -239,39 +214,16 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
    conc = coef.fit[3] - coef.fit[3]*degrad
    return(conc)              }
       
-	# Multi T samples
-    rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
-    rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
-    res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
-
-    if(interval == "CI"){
-    preds$CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-    preds$CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-    preds$degrad_CI_up <- (c0 - preds$CI1b) / c0
-    preds$degrad_CI_low <- (c0 - preds$CI2b) / c0
-} else {
-    sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*nrow(preds), df = DF))
-    res.draw = res.draw + rnorm(n = draw*nrow(preds), mean = 0, sd = sigma.dist)
-    preds$PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-    preds$PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-    preds$degrad_PI_up <- (c0 - preds$PI1b) / c0
-    preds$degrad_PI_low <- (c0 - preds$PI2b) / c0
-}
-    
-# Model Type 2 (no reparameterisation and k3 = 0)
+	# Model Type 2 (no reparameterisation and k3 = 0)
    }else if(step1_down_object$user_parameters$reparameterisation == F && step1_down_object$user_parameters$zero_order == T){
 	
     # Predictition prep
     k1 = coef(fit)[1]
     k2 = coef(fit)[2]
     c0 = coef(fit)[3]
-    draw = step1_down_object$user_parameters$draw
 
 # Predict response
   preds$degrad <- preds$total_time * exp(k1 - k2 / preds$K)
-  preds$conc <- c0 - c0 * preds$degrad
 
 	# Prediction function
     pred_fct = function(coef.fit) {
@@ -279,27 +231,7 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     conc = coef.fit[3] - coef.fit[3] * degrad
     return(conc)              }
       
-	# Multi T samples
-    rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
-    rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
-    res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
 
-    if(interval == "CI"){
-    preds$CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-    preds$CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-    preds$degrad_CI_up <- (c0 - preds$CI1b) / c0
-    preds$degrad_CI_low <- (c0 - preds$CI2b) / c0
-} else {
-    sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*nrow(preds), df = DF))
-    res.draw = res.draw + rnorm(n = draw*nrow(preds), mean = 0, sd = sigma.dist)
-    preds$PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-    preds$PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
-
-    preds$degrad_PI_up <- (c0 - preds$PI1b) / c0
-    preds$degrad_PI_low <- (c0 - preds$PI2b) / c0
-}
-    
 # Model Type 3 (reparameterisation and k3 is not zero)
    }else if(step1_down_object$user_parameters$reparameterisation == T && step1_down_object$user_parameters$zero_order == F){
 
@@ -308,46 +240,50 @@ if(step1_down_object$user_parameters$reparameterisation == F && step1_down_objec
     k2 = coef(fit)[2]
     k3 = coef(fit)[3]
     c0 = coef(fit)[4]
-    draw = step1_down_object$user_parameters$draw
 
    # Predict response
    preds$degrad <- 1 - ((1 - k3) * (1/(1 - k3) - preds$total_time * exp(k1 - k2 / preds$K + k2 / Kref)))^(1/(1-k3))
-   preds$conc <- c0 - c0 * preds$degrad
 
 	# Prediction function
    pred_fct = function(coef.fit) {
    degrad = degrad = 1 - ((1 - coef.fit[3]) * (1/(1 - coef.fit[3]) - preds$total_time * exp(coef.fit[1] - coef.fit[2] / preds$K + coef.fit[2] / Kref)))^(1/(1-coef.fit[3]))
    conc = coef.fit[4] - coef.fit[4] * degrad
-   return(conc)              }
-      
-	# Multi T samples
-   rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
-   rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
-   res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+   return(conc)              } }
 
-   if(interval == "CI"){
-   preds$CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
-   preds$CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+# Get mean predicted response
+preds$conc <- c0 - c0 * preds$degrad
 
-   preds$degrad_CI_up <- (c0 - preds$CI1b) / c0
-   preds$degrad_CI_low <- (c0 - preds$CI2b) / c0
-} else {
+# Conduct multi T samples (if draw has a value)
+draw = step1_down_object$user_parameters$draw
+
+rand.coef = matrix(nrow = n.params, ncol = draw, rnorm(n = n.params * draw, mean = 0, sd = 1))
+rand.coef = t(coef(fit) + t(chol(SIG * DF / (DF - 2))) %*% rand.coef)
+res.draw = matrix(nrow = draw, ncol = nrow(preds), byrow = TRUE, apply(rand.coef, 1, pred_fct))
+
+ if(interval == "CI"){
+ preds$CI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
+ preds$CI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
+
+ preds$degrad_CI_up <- (c0 - preds$CI1b) / c0
+ preds$degrad_CI_low <- (c0 - preds$CI2b) / c0
+                     } else {
    sigma.dist = sqrt((DF * sigma^2) / rchisq(n = draw*nrow(preds), df = DF))
    res.draw = res.draw + rnorm(n = draw*nrow(preds), mean = 0, sd = sigma.dist)
    preds$PI1b = apply(res.draw, 2, quantile, ((1-confidence_interval)/2), na.rm = TRUE)
    preds$PI2b = apply(res.draw, 2, quantile, ((1+confidence_interval)/2), na.rm = TRUE)
 
    preds$degrad_PI_up <- (c0 - preds$PI1b) / c0
-   preds$degrad_PI_low <- (c0 - preds$PI2b) / c0 }
-     }      }
+   preds$degrad_PI_low <- (c0 - preds$PI2b) / c0 
+                            }
+     }
 
-# Calculate the RL with CIs or PIs, as specified by the user
+# Calculate the RL with CIs or PIs, as specified by user
 if(interval == "CI"){
   degrad = as.numeric(preds$degrad_CI_up[preds$total_time == shelf_time]) 
 } else {
   degrad = as.numeric(preds$degrad_PI_up[preds$total_time == shelf_time])
 }
-  
+
 RL = LSL / (1 - degrad)
 
 # Save RL info as a df
