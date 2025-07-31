@@ -63,6 +63,7 @@ stop("Ensure interval is entered as either 'CI' or 'PI'.") }
 
 if(!is.null(step1_down_object$user_parameters$batch)){
 cat("For fits using step1_down_batch(), the returned release limit applies to any batch.\nNote that the accompanying plot displays the original model fit without batch effects.")
+}
 
 # Preparations for the release limit (RL) calculation and predictions
   fit <- step1_down_object$fit
