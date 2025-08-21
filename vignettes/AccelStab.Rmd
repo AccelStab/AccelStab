@@ -94,7 +94,8 @@ unique(antigenicity$time)
 Data obtained after 6 months will be used for validation only (they are not used to fit the model). The raw data of the study can be visualised quickly with the help of the function step1_plot_desc as follows:
 
 ```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
-step1_plot_desc(data = antigenicity, .time = "time", y = "conc", C = "Celsius", validation = "Validate", yname = "Antigenicity")
+step1_plot_desc(data = antigenicity, .time = "time", y = "conc", C = "Celsius",
+                validation = "Validate", yname = "Antigenicity")
 ```
 
 This plot displays the data points with one colour per temperature and connects the data points over time (through the mean values for replicated data).
@@ -110,7 +111,8 @@ args(step1_down)
 The user must give the data frame, the y variable (column name), time variable and a Celsius or Kelvin variable. The starting values for the algorithm (non-linear fit) can be given with the argument parms. If null (by default), the algorithm will use random numbers as starting values (our recommendation unless the user has reasonable values). The model is then fitted by calling step1_down and the summary of the fit and other statistics are obtained by generic R functions:
 
 ```{r}
-res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate")
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+                 validation = "Validate")
 summary(res$fit)
 confint(res$fit)
 ```
@@ -119,7 +121,9 @@ confint(res$fit)
 The degrees of freedom are equal to 50 and the residual standard deviation is 3.9. All the parameters (the 3 kinetic parameters and the intercept) are highly significant. Note that the intercept is close to 100 (the theoretical antigenicity value at $t=0$) and its 95% confidence interval (CI) is given by [94.9, 101.2] which contains 100. The same results would be obtained by fixing the starting values in a list through the argument parms. This is useful if the model does not converge to an optimal solution with random starting values.
 
 ```{r}
-res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100))
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+                 validation = "Validate", parms = list(k1 = 50, k2 = 10000,
+                                                       k3 = 3, c0 = 100))
 summary(res$fit)
 confint(res$fit)
 ```
@@ -141,7 +145,10 @@ step1_plot_pred(res, yname = "Antigenicity")
 As the goal of an accelerated stability study is to extrapolate the CQA for a longer time period, the predictions can be extrapolated in AccelStab by re-running step1_down and using the argument max_time_pred. For example, the following code will predict the antigenicity until 3 years and a lower specification limit (LSL) is added at 65.
 
 ```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
-res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100), max_time_pred = 3)
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+                 validation = "Validate",
+                 parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100),
+                 max_time_pred = 3)
 graph = step1_plot_pred(res, yname = "Antigenicity")
 graph = graph + geom_hline(aes(yintercept = 65), linetype = "dotted")
 graph
@@ -150,7 +157,10 @@ graph
 The model can also extrapolate the degradation for any temperature not included in the design. This is illustrated in the following line by extrapolating the degradation at 2C by using the argument temp_pred_C in the step1_down function.
 
 ```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
-res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100), max_time_pred = 3, temp_pred_C = 2)
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+                 validation = "Validate",
+                 parms = list(k1 = 50, k2 = 10000, k3 = 3, c0 = 100),
+                 max_time_pred = 3, temp_pred_C = 2)
 step1_plot_pred(res, yname = "Antigenicity")
 
 ```
@@ -159,7 +169,8 @@ This option is very useful to predict long-term storage at 5C when no data are c
 
 ```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 subdat = antigenicity[!(antigenicity$Celsius == "5" & antigenicity$time != 0),]
-res = step1_down(data = subdat, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, temp_pred_C = 5)
+res = step1_down(data = subdat, y = "conc", .time = "time", C = "Celsius",
+                 max_time_pred = 3, temp_pred_C = 5)
 step1_plot_pred(res, yname = "Antigenicity")
 
 ```
@@ -170,7 +181,8 @@ step1_plot_pred(res, yname = "Antigenicity")
 Pointwise confidence intervals (CIs) and prediction intervals (PIs) are given in the data frame predictions with a default 95% confidence level.
 
 ```{r}
-res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+                 max_time_pred = 3, validation = "Validate")
 head(res$prediction[,-c(3,6:8)])
 ```
 
@@ -179,7 +191,8 @@ Our recommendation to calculate the statistical intervals is to sample the coeff
 Three main functions are available in AccelStab to visualise the statistical intervals. The first one, step1_plot_CI, can be used to visualise the predictions with confidence intervals. The second one, step1_plot_PI, can be used to visualise the predictions with prediction intervals. The third one, step1_plot_T, can be used to visualise the confidence and prediction interval for a given temperature. A ribbon can be added easily by using the argument ribbon.
 
 ```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
-res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+                 max_time_pred = 3, validation = "Validate")
 step1_plot_CI(res, yname = "Antigenicity")
 step1_plot_PI(res, yname = "Antigenicity", ribbon = TRUE)
 step1_plot_T(res, focus_T = 5, yname = "Antigenicity", ribbon = TRUE)
@@ -194,8 +207,10 @@ A Temperature excursion is any deviation from the product's optimal temperature 
 This updated equation is incorporated into the excursion function. The following example will estimate a temperature excursion on top of the antigenicity data set. Initially the product is stored at 5 degrees for 6 months, then it is subject to 35 degrees for 1 month, then it is returned to 6 degrees for 17 months. Predictions and intervals are available alongside a plot.
 
 ```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
-res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius", max_time_pred = 3, validation = "Validate")
-exc <- excursion(res, temp_changes = c(5,35,6), time_changes = c(6/12,7/12,24/12), yname = "Antigenicity")
+res = step1_down(data = antigenicity, y = "conc", .time = "time", C = "Celsius",
+                 max_time_pred = 3, validation = "Validate")
+exc <- excursion(res, temp_changes = c(5,35,6), time_changes = c(6/12,7/12,24/12),
+                 yname = "Antigenicity")
 tail(exc$predictions[,-c(4)])
 exc$excursion_plot
 ```
@@ -205,7 +220,8 @@ exc$excursion_plot
 It is straightforward to calculate any statistics by sampling from the multi-t distribution. For example, the loss in antigenicity at 1 year 5C can be calculated and its 95% CI obtained from the set of coefficients drawn in the multi-t. The function step1_sample_mvt samples coefficients in the multi-t distribution.
 
 ```{r}
-draws = step1_sample_mvt(data = antigenicity, y = "conc", .time = "time", C = "Celsius", validation = "Validate", draw = 10^4)
+draws = step1_sample_mvt(data = antigenicity, y = "conc", .time = "time",
+                         C = "Celsius", validation = "Validate", draw = 10^4)
 draws = as.data.frame(draws)
 head(draws)
 ```
@@ -215,10 +231,10 @@ The predictions at 1 year can be calculated "by hand" as follows and compared to
 p1 = draws$c0 - draws$c0 * (1 - ((1 - draws$k3) * (1/(1 - draws$k3) - 1 * exp(draws$k1 - draws$k2 / (5+273.15))))^(1/(1-draws$k3)))
 loss_1y = 1 - p1/draws$c0
 mean(loss_1y)
-quantile(loss_1y, c(0.025, 0.975))
+quantile(loss_1y, c(0.025, 0.975), na.rm = TRUE)
 hist(loss_1y, main = "Lost (%) in 1 year at 5C")
 abline(v = mean(loss_1y), lwd = 2, col = 3)
-abline(v = quantile(loss_1y, c(0.025, 0.975)), lwd = 2, col = 3, lty = 2)
+abline(v = quantile(loss_1y, c(0.025, 0.975), na.rm = TRUE), lwd = 2, col = 3, lty = 2)
 ```
 
 One can see that the expected loss is 19.5% with a 95% CI given by [14.8, 24.6]%.
@@ -233,7 +249,8 @@ In this data set, the potency of a vaccine is measured with 3 temperatures and t
 data(potency)
 potency$Validate = as.factor(ifelse(potency$Time < 8, 0, 1))
 head(potency)
-step1_plot_desc(data = potency, .time = "Time", y = "Potency", C = "Celsius", validation = "Validate", yname = "Potency")
+step1_plot_desc(data = potency, .time = "Time", y = "Potency", C = "Celsius",
+                validation = "Validate", yname = "Potency")
 ```
 
 ### Model Fit
@@ -241,7 +258,8 @@ step1_plot_desc(data = potency, .time = "Time", y = "Potency", C = "Celsius", va
 The model is fitted by calling step1_down:
 
 ```{r}
-res = step1_down(data = potency, y = "Potency", .time = "Time", C = "Celsius", validation = "Validate")
+res = step1_down(data = potency, y = "Potency", .time = "Time", C = "Celsius",
+                 validation = "Validate")
 summary(res$fit)
 confint(res$fit)
 ```
@@ -249,7 +267,8 @@ confint(res$fit)
 One can see that the kinetic order is estimated as zero by the model. A warning is then printed to suggest to the user to rerun the code with the option zero_order = TRUE.
 
 ```{r}
-res = step1_down(data = potency, y = "Potency", .time = "Time", C = "Celsius", validation = "Validate", zero_order = TRUE)
+res = step1_down(data = potency, y = "Potency", .time = "Time", C = "Celsius",
+                 validation = "Validate", zero_order = TRUE)
 summary(res$fit)
 confint(res$fit)
 ```
@@ -298,7 +317,9 @@ To illustrate the use of sampling within the multi-t distribution, consider a lo
 
 
 ```{r}
-draws = step1_sample_mvt(data = potency, y = "Potency", .time = "Time", C = "Celsius", validation = "Validate", draw = 10^4, zero_order = TRUE)
+draws = step1_sample_mvt(data = potency, y = "Potency", .time = "Time",
+                         C = "Celsius", validation = "Validate", draw = 10^4,
+                         zero_order = TRUE)
 draws = as.data.frame(draws)
 head(draws)
 T9 = (1 - 9/draws$c0) / exp(draws$k1 - draws$k2 / (5+273.15))
@@ -308,8 +329,8 @@ The vector T9 is the distribution of time needed to reach the lower specificatio
 
 ```{r, fig.width=8, fig.height=6, out.width='75%', dpi=200, fig.align='center'}
 mean(T9)
-quantile(T9, c(0.025, 0.975))
+quantile(T9, c(0.025, 0.975), na.rm = TRUE)
 hist(T9, main = "Time to reach the lower specification at 5C")
 abline(v = mean(T9), lwd = 2, col = 3)
-abline(v = quantile(T9, c(0.025, 0.975)), lwd = 2, col = 3, lty = 2)
+abline(v = quantile(T9, c(0.025, 0.975), na.rm = TRUE), lwd = 2, col = 3, lty = 2)
 ```
